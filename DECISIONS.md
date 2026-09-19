@@ -234,12 +234,14 @@ ReviewedAt?, ReviewNote?, ExecutedAt?, ExecutionError?, ExpiresAt?, RowVersion)
 permissionها:
 
 ```
-product.delete.request   → ProductAdmin
+product.delete.request   → Admin
 product.delete           → SuperAdmin
 approval.review          → SuperAdmin
 approval.read.own        → همه نقش‌ها
 approval.read.all        → SuperAdmin
 ```
+
+یادداشت (۲۰۲۶-۰۹-۱۹، تأیید کاربر): در حال حاضر فقط دو نقش وجود دارد — `Admin` و `SuperAdmin`. نام `ProductAdmin` استفاده نمی‌شود. ادمین هیچ مسیری برای حذف محصول ندارد و تنها می‌تواند درخواست حذف ثبت کند؛ اجرای حذف فقط پس از تأیید SuperAdmin انجام می‌شود.
 
 اندپوینت‌ها:
 
