@@ -932,6 +932,19 @@ product.publish          → SuperAdmin (با فلگ IsSuperAdminOnly)
 - ADR-012 اصلاح شد: «Hangfire یا Quartz» به «Hangfire» تغییر کرد.
 - ماژول‌های بعدی که به schema نیاز دارند از همین الگوی نام‌گذاری (نام ماژول به کوچک‌حروف) پیروی می‌کنند مگر خلاف آن تصمیم‌گیری شود.
 
+### ADR-046 — انتساب نقش SuperAdmin، مثل ADR-002، فقط با identity.access.manage
+
+**تاریخ:** ۲۰۲۶-۰۹-۱۹
+**وضعیت:** پذیرفته‌شده (Accepted)
+
+**زمینه:** در حین پیاده‌سازی گام ۱، یک خلاء امنیتی واقعی پیدا شد: `PUT /api/v1/identity/users/{id}/roles` فقط permission `identity.users.manage` را چک می‌کند (ADR-021)، و این permission به‌عمد `IsSuperAdminOnly` نیست چون کارهای معمول (ساخت کاربر، فعال/غیرفعال‌سازی، ریست رمز) نباید منحصر به SuperAdmin بمانند. اما همین یک permission، بدون هیچ چک اضافه، به دارنده‌اش اجازه می‌داد نقش `SuperAdmin` را به هر کاربری — از جمله خودش — بدهد؛ یعنی یک مسیر دور زدن کامل مدل دسترسی permission-محور ADR-001، از طریق نقش به‌جای permission مستقیم.
+
+**تصمیم:** انتساب نقش `SuperAdmin` به هر کاربری (از طریق `SetUserRoles`) خودش یک عملیات منحصر به `identity.access.manage` است، جدا از `identity.users.manage` که کل endpoint را می‌بندد. اگر مجموعهٔ نقش‌های درخواستی شامل نقش `IsSystemManaged` (یعنی SuperAdmin) باشد، درخواست‌کننده باید `identity.access.manage` هم داشته باشد؛ در غیر این صورت رد می‌شود، حتی اگر `identity.users.manage` را داشته باشد.
+
+**دلیل:** همان استدلال ADR-002 برای فلگ `IsSuperAdminOnly` روی permissionها: یک راه سطح‌پایین برای همان ارتقای امتیاز، اگر بسته نشود، دیر یا زود کسی را غافلگیر می‌کند. اینجا به‌جای گذاشتن این محدودیت روی خودِ permission (که معنا نداشت، چون `identity.users.manage` برای کارهای دیگرش باید در دسترس Admin بماند)، محدودیت روی «هدف انتساب نقش SuperAdmin» گذاشته شد.
+
+**پیامد:** `SuperAdminRoleAssignmentGuard` این قاعده را جدا از HTTP/دیتابیس تست‌پذیر نگه می‌دارد (الگوی مشابه `SuperAdminOnlyPermissionGuard` در همان گام).
+
 ## پیشنهادهای اجرایی — هنوز تصمیم قطعی نیستند
 
 - TypeScript و App Router برای فرانت‌اند — تصمیم شد؛ نک. ADR-013.
@@ -943,6 +956,7 @@ product.publish          → SuperAdmin (با فلگ IsSuperAdminOnly)
 
 ## موارد باز
 
+- برچسب نمایشی (`DisplayName`) برای `Permission` هنوز در schema نیست؛ `PermissionDefinition` (ADR-005) یکی دارد ولی گام ۱ آن را در جدول ذخیره نکرد. لازمهٔ صفحهٔ «دسترسی‌های کاربر» در گام ۴ است.
 - ~~انتخاب محل استقرار: سیستم داخل شرکت یا VPS~~ — بسته شد با ADR-018: ابتدا لوکال شرکت.
 - ~~انتخاب اجرای Next.js با Node.js یا خروجی static~~ — بسته شد: Node runtime (نک. ADR-011 و ADR-013).
 - تعیین نسخه‌های دقیق و سازگار وابستگی‌ها هنگام راه‌اندازی پروژه و ثبت lockfile.
