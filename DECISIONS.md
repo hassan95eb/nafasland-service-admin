@@ -286,7 +286,7 @@ POST   /api/v1/approvals/{id}/retry           پس از ExecutionFailed
 **تصمیم:** این موارد از ابتدا پیاده می‌شوند:
 - مسیر `/api/v1/` روی همهٔ اندپوینت‌ها.
 - feature flag به ازای هر ماژول (برای دیپلوی ماژول نیمه‌کاره در حالت خاموش).
-- background job runner (Hangfire یا Quartz) وایرشده.
+- background job runner: **Hangfire** (نک. ADR-045).
 - Options pattern با اعتبارسنجی کانفیگ در استارتاپ به ازای هر ماژول.
 
 **دلیل:** انبارداری بلافاصله سنکرون دوره‌ای و هشدار انقضا می‌خواهد؛ اضافه‌کردن job runner بعداً یعنی دست‌زدن به بوت‌استرپ اپ.
@@ -914,6 +914,23 @@ product.publish          → SuperAdmin (با فلگ IsSuperAdminOnly)
 - یک پروژهٔ **`NafasLand.Admin.Architecture.Tests`** وجود دارد که مرزها را تست می‌کند: هیچ ماژولی به غیر از `Contracts` ماژول دیگر رفرنس ندهد، و هیچ ماژولی به ماژول دیگر رفرنس پروژه‌ای نداشته باشد. این قاعده را از «توافق» به «چیزی که بیلد را می‌شکند» تبدیل می‌کند.
 - `Directory.Packages.props` اجباری است تا نسخهٔ یک پکیج بین پروژه‌ها واگرا نشود.
 - `Directory.Build.props` با nullable فعال و warnings-as-errors؛ هشدار خاموش‌شده بدهکاری فنی خاموش است.
+
+### ADR-045 — نهایی‌سازی Job Runner، نام‌گذاری Schema و رفع آسیب‌پذیری Newtonsoft.Json
+
+**تاریخ:** ۲۰۲۶-۰۹-۱۹
+**وضعیت:** پذیرفته‌شده (Accepted)
+**جایگزین:** بخشی از ADR-012 («Hangfire یا Quartz») را قطعی می‌کند.
+
+**زمینه:** در حین پیاده‌سازی گام ۰ (اسکلت راه‌رونده)، سه مورد باز ماند که ADR-012 و ADR-004/019 آن‌ها را مشخص نکرده بودند: انتخاب قطعی بین Hangfire و Quartz، نام schema دیتابیس برای جدول‌های Hangfire و ماژول نمونه (Sample)، و نحوهٔ برخورد با آسیب‌پذیری شناخته‌شدهٔ Newtonsoft.Json 11.0.1 که Hangfire.Core به‌صورت ترانزیتیو به آن وابسته است (TreatWarningsAsErrors در ADR-044 بیلد را با این هشدار می‌شکند).
+
+**تصمیم:**
+- **Job runner:** Hangfire نهایی شد (نه Quartz) — به همان SQL Server موجود (ADR-019) وصل می‌شود و health check ساده‌تری نسبت به Quartz دارد.
+- **نام‌گذاری schema:** جدول‌های Hangfire در schema به نام `hangfire`، و جدول‌های ماژول Sample در schema به نام `sample` قرار می‌گیرند؛ در همان الگوی schemaهای `identity`/`audit`/`catalog`/`approvals` در ADR-019.
+- **Newtonsoft.Json:** نسخهٔ ترانزیتیو Hangfire.Core (۱۱.۰.۱) با یک `PackageVersion` صریح در `Directory.Packages.props` به نسخهٔ ۱۳.۰.۴ ارتقا داده می‌شود. این افزودن یک وابستگی جدید نیست، فقط override نسخهٔ همان وابستگی ترانزیتیوی است که از قبل با Hangfire می‌آید.
+
+**پیامدها:**
+- ADR-012 اصلاح شد: «Hangfire یا Quartz» به «Hangfire» تغییر کرد.
+- ماژول‌های بعدی که به schema نیاز دارند از همین الگوی نام‌گذاری (نام ماژول به کوچک‌حروف) پیروی می‌کنند مگر خلاف آن تصمیم‌گیری شود.
 
 ## پیشنهادهای اجرایی — هنوز تصمیم قطعی نیستند
 

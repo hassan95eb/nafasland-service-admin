@@ -1,0 +1,9 @@
+services:
+  mssql:
+    restart: unless-stopped
+    # هیچ پورتی به‌سمت host باز نیست؛ فقط شبکهٔ داخلی compose به آن دسترسی دارد.
+
+  api:
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production

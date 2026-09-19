@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <UserSecretsId>0cf59ee9-c3ff-4d48-8b5b-10e4c04b52fb</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Hangfire.AspNetCore" />
+    <PackageReference Include="Hangfire.SqlServer" />
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Serilog.Sinks.File" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <!-- فقط ابزار CLI مهاجرت (dotnet ef) از این استفاده می‌کند؛ در runtime لازم نیست -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shared\Kernel\NafasLand.Admin.Shared.Kernel.csproj" />
+    <ProjectReference Include="..\Shared\Infrastructure\NafasLand.Admin.Shared.Infrastructure.csproj" />
+    <!--
+      رفرنس پروژه‌ای صرفاً برای این است که DLL ماژول کنار Api کپی شود؛
+      Program.cs با اسکن اسمبلی (ADR-005) پیدایش می‌کند، نه با ارجاع مستقیم به نوع‌هایش.
+    -->
+    <ProjectReference Include="..\Modules\Sample\NafasLand.Admin.Modules.Sample.csproj" />
+  </ItemGroup>
+
+</Project>
