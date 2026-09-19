@@ -945,6 +945,41 @@ product.publish          → SuperAdmin (با فلگ IsSuperAdminOnly)
 
 **پیامد:** `SuperAdminRoleAssignmentGuard` این قاعده را جدا از HTTP/دیتابیس تست‌پذیر نگه می‌دارد (الگوی مشابه `SuperAdminOnlyPermissionGuard` در همان گام).
 
+### ADR-047 — کتابخانهٔ خروجی Excel واقعی: ClosedXML
+
+**تاریخ:** ۲۰۲۶-۰۹-۱۹
+**وضعیت:** پذیرفته‌شده (Accepted)
+
+**زمینه:** ADR-014 خروجی گزارش AuditLog را به‌صورت «CSV/Excel» تصمیم‌گیری کرده بود، ولی کتابخانه‌ای برای تولید فایل واقعی `.xlsx` انتخاب نشده بود. CSV نیاز به کتابخانه ندارد (نوشتن دستی)، اما `.xlsx` نیاز به یک وابستگی جدید دارد که طبق قواعد پروژه باید پیش از افزودن تأیید شود.
+
+**تصمیم:** برای تولید خروجی `.xlsx` از **ClosedXML** استفاده می‌شود.
+
+**دلیل:** لایسنس MIT (بدون محدودیت تجاری، برخلاف EPPlus از نسخهٔ ۵ به بعد)، فعال نگه‌داشته‌شده، و API ساده‌تر از NPOI برای نیاز فعلی (فقط نوشتن یک شیت جدولی، بدون فرمول یا نمودار).
+
+**گزینه‌های رد‌شده:**
+- **EPPlus** — لایسنس غیرتجاری از نسخهٔ ۵ به بعد؛ برای محصول تجاری نیاز به خرید لایسنس دارد.
+- **NPOI** — API سنگین‌تر برای این نیاز ساده؛ پشتیبانی از `.xls` قدیمی در اینجا کاربردی ندارد.
+
+**پیامد:** `ClosedXML` در `Directory.Packages.props` اضافه می‌شود؛ این وابستگی فقط داخل ماژول `Auditing` (فیچر خروجی) استفاده می‌شود.
+
+### ADR-048 — ثبت Outcome=Denied در AuditLog با وجود ترتیب ثابت pipeline (ADR-006)
+
+**تاریخ:** ۲۰۲۶-۰۹-۱۹
+**وضعیت:** پذیرفته‌شده (Accepted)
+
+**زمینه:** ترتیب pipeline در ADR-006 ثابت است: `Logging → Validation → Authorization → Transaction → Audit → Handler`. یعنی `AuditBehavior` تنها پس از موفقیت `AuthorizationBehavior` (و صدا زدن `next()` توسط آن) اجرا می‌شود. وقتی `AuthorizationBehavior` یک command را رد می‌کند (`AuthorizationDeniedException`)، اصلاً به `AuditBehavior` نمی‌رسد — این استثنا پیش از رسیدن به آن پرتاب می‌شود. ولی طبق نقشهٔ راه گام ۲، «تلاش رد‌شده باید با `Outcome = Denied` ثبت شود» یکی از معیارهای پذیرش صریح است. تغییر ترتیب pipeline هم گزینه نیست: مستندسازی خود `AuditBehavior` در گام ۰ صراحتاً گفته بود جایگاهش «بدون جابه‌جایی سایر behaviorها» ثابت می‌ماند.
+
+**تصمیم:**
+- عملیات واقعی نوشتن رکورد در جدول `AuditLog` از طریق یک سرویس مشترک به‌نام `IAuditLogWriter` (تعریف در `Shared.Kernel`، پیاده‌سازی در ماژول `Auditing`) انجام می‌شود — نه مستقیم توسط `AuditBehavior` یا `AuthorizationBehavior` به‌صورت پراکنده.
+- `AuditBehavior` (بدون تغییر جایگاه، همچنان پنجمین حلقه) مسئول ثبت `Outcome = Success` (پس از موفقیت `next()`) و `Outcome = Failed` (وقتی `next()` استثنایی غیر از رد دسترسی پرتاب کند، مثلاً خطای دیتابیس) است.
+- `AuthorizationBehavior` (بدون جابه‌جایی، همچنان سومین حلقه) پیش از پرتاب `AuthorizationDeniedException` برای هر commandی که `IAuditableCommand` را پیاده کرده، یک رکورد با `Outcome = Denied` از طریق همان `IAuditLogWriter` می‌نویسد.
+- هر دو behavior فقط برای commandهایی که `IAuditableCommand` را پیاده کرده‌اند وارد عمل می‌شوند؛ commandهای بدون این مارکر (مثل `PingCommand`) بی‌تغییر می‌مانند و لاگ نمی‌شوند.
+- داده‌های خاص هر عملیات (`EntityId`، `BeforeJson`، `AfterJson`، `ChangedFields`) از طریق یک سرویس Scoped به‌نام `IAuditContext` (تعریف در `Shared.Kernel`) توسط خود Handler پر می‌شوند؛ Handler مستقیماً به جدول `AuditLog` نمی‌نویسد، فقط این context را پر می‌کند و نوشتن واقعی همچنان منحصراً وظیفهٔ دو behavior بالاست — این با اصل ADR-009 («نوشتن لاگ در AuditBehavior انجام می‌شود، نه در کنترلرها») در تضاد نیست، چون خودِ عملیات درج در جدول هنوز در behaviorهاست، نه در handler.
+
+**دلیل:** این طرح، معیار پذیرش «رد شدن هم لاگ شود» را بدون شکستن قاعدهٔ «ترتیب pipeline ثابت بماند» (ADR-006) برآورده می‌کند و منطق نوشتن در جدول را در یک نقطه (`IAuditLogWriter`) نگه می‌دارد.
+
+**گزینهٔ رد‌شده:** جابه‌جایی `AuditBehavior` به قبل از `AuthorizationBehavior` — این دقیقاً همان کاری است که مستندسازی گام ۰ گفته بود نباید انجام شود، و باعث می‌شد لاگ حتی پیش از دانستن اینکه کاربر اصلاً authenticated هست یا نه نوشته شود.
+
 ## پیشنهادهای اجرایی — هنوز تصمیم قطعی نیستند
 
 - TypeScript و App Router برای فرانت‌اند — تصمیم شد؛ نک. ADR-013.
