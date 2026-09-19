@@ -34,6 +34,42 @@ internal sealed class ProblemDetailsExceptionHandler(ILogger<ProblemDetailsExcep
                 Title = "دسترسی غیرمجاز",
                 Detail = authorizationDenied.Message,
             },
+            PasswordChangeRequiredException passwordChangeRequired => new ProblemDetails
+            {
+                Status = StatusCodes.Status403Forbidden,
+                Title = "نیاز به تغییر رمز عبور",
+                Detail = passwordChangeRequired.Message,
+            },
+            AccountLockedException accountLocked => new ProblemDetails
+            {
+                Status = StatusCodes.Status423Locked,
+                Title = "حساب قفل است",
+                Detail = accountLocked.Message,
+            },
+            AccountInactiveException accountInactive => new ProblemDetails
+            {
+                Status = StatusCodes.Status403Forbidden,
+                Title = "حساب غیرفعال است",
+                Detail = accountInactive.Message,
+            },
+            InvalidCredentialsException invalidCredentials => new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "ورود ناموفق",
+                Detail = invalidCredentials.Message,
+            },
+            ConflictException conflict => new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "تداخل با وضعیت فعلی",
+                Detail = conflict.Message,
+            },
+            AntiforgeryValidationFailedException antiforgeryFailed => new ProblemDetails
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "توکن antiforgery نامعتبر یا موجود نیست",
+                Detail = antiforgeryFailed.Message,
+            },
             CommandValidationException validation => BuildValidationProblemDetails(validation),
             _ => new ProblemDetails
             {
@@ -44,6 +80,11 @@ internal sealed class ProblemDetailsExceptionHandler(ILogger<ProblemDetailsExcep
         };
 
         problemDetails.Extensions["correlationId"] = correlationId;
+
+        if (exception is PasswordChangeRequiredException)
+        {
+            problemDetails.Extensions["errorCode"] = "PASSWORD_CHANGE_REQUIRED";
+        }
 
         if (problemDetails.Status == StatusCodes.Status500InternalServerError)
         {

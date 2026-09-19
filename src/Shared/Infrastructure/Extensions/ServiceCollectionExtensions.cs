@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using NafasLand.Admin.Shared.Infrastructure.Antiforgery;
 using NafasLand.Admin.Shared.Infrastructure.Authorization;
 using NafasLand.Admin.Shared.Infrastructure.CorrelationId;
 using NafasLand.Admin.Shared.Infrastructure.ErrorHandling;
@@ -48,5 +49,16 @@ public static class ServiceCollectionExtensions
     public static IApplicationBuilder UseUserContextLogging(this IApplicationBuilder app)
     {
         return app.UseMiddleware<UserContextLoggingMiddleware>();
+    }
+
+    /// <summary>
+    /// Must be called after routing has resolved an endpoint (i.e. after any
+    /// explicit UseRouting, or simply after UseAuthentication/UseAuthorization in
+    /// minimal hosting) so AntiforgeryValidationMiddleware can read endpoint
+    /// metadata via HttpContext.GetEndpoint().
+    /// </summary>
+    public static IApplicationBuilder UseAntiforgeryValidation(this IApplicationBuilder app)
+    {
+        return app.UseMiddleware<AntiforgeryValidationMiddleware>();
     }
 }

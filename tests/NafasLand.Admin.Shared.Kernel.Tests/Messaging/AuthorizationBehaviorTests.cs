@@ -16,6 +16,12 @@ public sealed class AuthorizationBehaviorTests
 
     private sealed record UnprotectedCommand : ICommand<string>;
 
+    private sealed record AnonymousCommand : ICommand<string>, IAllowAnonymousCommand;
+
+    private sealed record AuthenticatedOnlyCommand : ICommand<string>, IRequiresAuthenticatedUser;
+
+    private sealed record GateExemptCommand : ICommand<string>, IRequiresAuthenticatedUser, IAllowedWhenPasswordChangeRequired;
+
     private static ServiceProvider BuildProvider(ClaimsPrincipal user)
     {
         var services = new ServiceCollection();
@@ -33,6 +39,19 @@ public sealed class AuthorizationBehaviorTests
     private static ClaimsPrincipal BuildUser(params string[] permissions)
     {
         var claims = permissions.Select(p => new Claim(PermissionClaimTypes.Permission, p));
+        return new ClaimsPrincipal(new ClaimsIdentity(claims, "test"));
+    }
+
+    private static ClaimsPrincipal BuildUnauthenticatedUser()
+    {
+        // No authenticationType passed in -> Identity.IsAuthenticated is false,
+        // the same shape a real cookie scheme produces for a missing/invalid cookie.
+        return new ClaimsPrincipal(new ClaimsIdentity());
+    }
+
+    private static ClaimsPrincipal BuildUserRequiringPasswordChange()
+    {
+        Claim[] claims = [new(AccountClaimTypes.MustChangePassword, "true")];
         return new ClaimsPrincipal(new ClaimsIdentity(claims, "test"));
     }
 
@@ -68,5 +87,58 @@ public sealed class AuthorizationBehaviorTests
 
         await Assert.ThrowsAsync<AuthorizationDeniedException>(() =>
             behavior.HandleAsync(new ProtectedCommand("sample.ping"), () => Task.FromResult("ok"), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task command_با_IAllowAnonymousCommand_حتی_بدون_کاربر_احرازهویت‌شده_اجرا_می‌شود()
+    {
+        var provider = BuildProvider(BuildUnauthenticatedUser());
+        var behavior = provider.GetRequiredService<IPipelineBehavior<AnonymousCommand, string>>();
+
+        var result = await behavior.HandleAsync(new AnonymousCommand(), () => Task.FromResult("ok"), CancellationToken.None);
+
+        Assert.Equal("ok", result);
+    }
+
+    [Fact]
+    public async Task command_بدون_کاربر_احرازهویت‌شده_رد_می‌شود()
+    {
+        var provider = BuildProvider(BuildUnauthenticatedUser());
+        var behavior = provider.GetRequiredService<IPipelineBehavior<AuthenticatedOnlyCommand, string>>();
+
+        await Assert.ThrowsAsync<AuthorizationDeniedException>(() =>
+            behavior.HandleAsync(new AuthenticatedOnlyCommand(), () => Task.FromResult("ok"), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task command_با_IRequiresAuthenticatedUser_و_کاربر_واردشده_بدون_permission_خاصی_اجرا_می‌شود()
+    {
+        var provider = BuildProvider(BuildUser());
+        var behavior = provider.GetRequiredService<IPipelineBehavior<AuthenticatedOnlyCommand, string>>();
+
+        var result = await behavior.HandleAsync(new AuthenticatedOnlyCommand(), () => Task.FromResult("ok"), CancellationToken.None);
+
+        Assert.Equal("ok", result);
+    }
+
+    [Fact]
+    public async Task وقتی_MustChangePassword_true_است_commandهای_معمولی_با_PasswordChangeRequiredException_رد_می‌شوند()
+    {
+        var provider = BuildProvider(BuildUserRequiringPasswordChange());
+        var behavior = provider.GetRequiredService<IPipelineBehavior<AuthenticatedOnlyCommand, string>>();
+
+        await Assert.ThrowsAsync<PasswordChangeRequiredException>(() =>
+            behavior.HandleAsync(new AuthenticatedOnlyCommand(), () => Task.FromResult("ok"), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task وقتی_MustChangePassword_true_است_command_با_IAllowedWhenPasswordChangeRequired_همچنان_اجرا_می‌شود()
+    {
+        var provider = BuildProvider(BuildUserRequiringPasswordChange());
+        var behavior = provider.GetRequiredService<IPipelineBehavior<GateExemptCommand, string>>();
+
+        var result = await behavior.HandleAsync(new GateExemptCommand(), () => Task.FromResult("ok"), CancellationToken.None);
+
+        Assert.Equal("ok", result);
     }
 }

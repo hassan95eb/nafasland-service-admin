@@ -25,6 +25,8 @@ services:
       - infrastructure-bin:/src/src/Shared/Infrastructure/bin
       - sample-obj:/src/src/Modules/Sample/obj
       - sample-bin:/src/src/Modules/Sample/bin
+      - identity-obj:/src/src/Modules/Identity/obj
+      - identity-bin:/src/src/Modules/Identity/bin
 
 volumes:
   api-obj:
@@ -35,3 +37,5 @@ volumes:
   infrastructure-bin:
   sample-obj:
   sample-bin:
+  identity-obj:
+  identity-bin:

@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\src\Shared\Kernel\NafasLand.Admin.Shared.Kernel.csproj" />
     <ProjectReference Include="..\..\src\Shared\Infrastructure\NafasLand.Admin.Shared.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Sample\NafasLand.Admin.Modules.Sample.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Identity\NafasLand.Admin.Modules.Identity.csproj" />
   </ItemGroup>
 
 </Project>

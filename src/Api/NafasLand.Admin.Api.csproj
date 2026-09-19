@@ -25,6 +25,13 @@
       its types directly.
     -->
     <ProjectReference Include="..\Modules\Sample\NafasLand.Admin.Modules.Sample.csproj" />
+    <!--
+      Identity is referenced for both reasons: assembly discovery (ADR-005) AND
+      because Api's cookie-auth wiring (Program.cs, EffectivePermissionsClaimsTransformation)
+      calls into Identity.Contracts directly — the one place a module's public
+      surface is meant to be used from outside the module.
+    -->
+    <ProjectReference Include="..\Modules\Identity\NafasLand.Admin.Modules.Identity.csproj" />
   </ItemGroup>
 
 </Project>

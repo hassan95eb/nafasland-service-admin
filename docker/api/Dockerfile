@@ -8,6 +8,7 @@ COPY src/Api/NafasLand.Admin.Api.csproj src/Api/
 COPY src/Shared/Kernel/NafasLand.Admin.Shared.Kernel.csproj src/Shared/Kernel/
 COPY src/Shared/Infrastructure/NafasLand.Admin.Shared.Infrastructure.csproj src/Shared/Infrastructure/
 COPY src/Modules/Sample/NafasLand.Admin.Modules.Sample.csproj src/Modules/Sample/
+COPY src/Modules/Identity/NafasLand.Admin.Modules.Identity.csproj src/Modules/Identity/
 RUN dotnet restore src/Api/NafasLand.Admin.Api.csproj
 
 COPY src/ src/

@@ -1,8 +1,9 @@
 # NafasLand Admin
 
-پنل مدیریت مستقل برای کارکنان نفس‌لند، روی API پرتال. این مخزن در حال حاضر
-شامل **اسکلت راه‌رونده** (گام ۰ نقشهٔ راه) است: زیرساخت‌ها وایر شده‌اند، ولی
-هیچ منطق محصولی یا تماسی با پرتال هنوز وجود ندارد. برای تصمیم‌های معماری به
+پنل مدیریت مستقل برای کارکنان نفس‌لند، روی API پرتال. این مخزن اسکلت
+راه‌رونده (گام ۰) به‌علاوهٔ Identity و مدل دسترسی (گام ۱ نقشهٔ راه) را دارد:
+کاربر/نقش/permission واقعی، ورود با کوکی، و اولین حساب SuperAdmin. هنوز هیچ
+منطق محصولی یا تماسی با پرتال وجود ندارد. برای تصمیم‌های معماری به
 `DECISIONS.md` و برای ترتیب کار به `ROADMAP.md` مراجعه کن.
 
 ## پیش‌نیازها
@@ -17,13 +18,16 @@
 
 ## اجرای محلی (بدون Docker)
 
-۱. رشتهٔ اتصال و تنظیمات پرتال را با User Secrets تنظیم کن (این‌ها در گیت
-نیستند و اجباری‌اند؛ بدون آن‌ها برنامه در استارتاپ بالا نمی‌آید):
+۱. رشتهٔ اتصال، تنظیمات پرتال و اعتبارنامهٔ اولیهٔ SuperAdmin را با User
+Secrets تنظیم کن (این‌ها در گیت نیستند و اجباری‌اند؛ بدون آن‌ها برنامه در
+استارتاپ بالا نمی‌آید):
 
 ```bash
 cd src/Api
 dotnet user-secrets set "Database:ConnectionString" "Server=localhost;Database=NafasLandAdmin;User Id=sa;Password=<رمز>;TrustServerCertificate=True;"
 dotnet user-secrets set "Portal:TestProductId" "<شناسهٔ محصول تستی>"
+dotnet user-secrets set "Identity:SuperAdmin:Username" "superadmin"
+dotnet user-secrets set "Identity:SuperAdmin:Password" "<رمز اولیهٔ قوی>"
 ```
 
 `Portal:BaseUrl` و `Portal:RateLimitPerSecond` مقدار پیش‌فرض در
@@ -33,13 +37,20 @@ dotnet user-secrets set "Portal:TestProductId" "<شناسهٔ محصول تست�
 ۲. یک SQL Server در دسترس داشته باش (مثلاً همان کانتینر `mssql` از
 `compose.yaml`، یا یک نصب محلی).
 
-۳. مهاجرت را اعمال کن (مهاجرت به‌صورت خودکار در استارتاپ اجرا نمی‌شود؛
-ADR-041):
+۳. مهاجرت هر دو ماژول را اعمال کن (مهاجرت به‌صورت خودکار در استارتاپ اجرا
+نمی‌شود؛ ADR-041). چون بیش از یک `DbContext` وجود دارد، `--context` اجباری
+است:
 
 ```bash
 dotnet ef database update \
   --project src/Modules/Sample/NafasLand.Admin.Modules.Sample.csproj \
-  --startup-project src/Api/NafasLand.Admin.Api.csproj
+  --startup-project src/Api/NafasLand.Admin.Api.csproj \
+  --context NafasLand.Admin.Modules.Sample.Persistence.SampleDbContext
+
+dotnet ef database update \
+  --project src/Modules/Identity/NafasLand.Admin.Modules.Identity.csproj \
+  --startup-project src/Api/NafasLand.Admin.Api.csproj \
+  --context NafasLand.Admin.Modules.Identity.Persistence.IdentityDbContext
 ```
 
 ۴. اجرا:
@@ -48,12 +59,17 @@ dotnet ef database update \
 dotnet run --project src/Api/NafasLand.Admin.Api.csproj
 ```
 
+اولین بار که برنامه بالا می‌آید، اگر هیچ کاربر SuperAdmin ای وجود نداشته
+باشد، حساب آن از روی `Identity:SuperAdmin:Username`/`Password` ساخته می‌شود
+(ADR-022)، با `MustChangePassword = true`.
+
 ## اجرا با Docker Compose
 
 ```bash
 cp .env.example .env
 # مقدارهای واقعی را در .env پر کن: MSSQL_SA_PASSWORD، DATABASE__CONNECTIONSTRING،
-# PORTAL__BASEURL، PORTAL__TESTPRODUCTID
+# PORTAL__BASEURL، PORTAL__TESTPRODUCTID،
+# IDENTITY__SUPERADMIN__USERNAME، IDENTITY__SUPERADMIN__PASSWORD
 
 docker compose up --build
 ```
@@ -68,46 +84,100 @@ docker compose -f compose.yaml -f compose.prod.yaml up -d --build
 
 **مهاجرت هنگام بالا آمدن کانتینر اجرا نمی‌شود.** بعد از بالا آمدن `mssql`
 (و پیش از آنکه `api` بتواند واقعاً کار کند، چون بررسی مهاجرت معوق در
-استارتاپ آن را متوقف می‌کند)، مهاجرت را از host اجرا کن — با
+استارتاپ آن را متوقف می‌کند)، مهاجرت هر دو ماژول را از host اجرا کن — با
 `compose.override.yaml`، پورت ۱۴۳۳ به host باز است:
 
 ```bash
 dotnet ef database update \
   --project src/Modules/Sample/NafasLand.Admin.Modules.Sample.csproj \
   --startup-project src/Api/NafasLand.Admin.Api.csproj \
+  --context NafasLand.Admin.Modules.Sample.Persistence.SampleDbContext \
+  --connection "Server=localhost,1433;Database=NafasLandAdmin;User Id=sa;Password=<همان MSSQL_SA_PASSWORD>;TrustServerCertificate=True;"
+
+dotnet ef database update \
+  --project src/Modules/Identity/NafasLand.Admin.Modules.Identity.csproj \
+  --startup-project src/Api/NafasLand.Admin.Api.csproj \
+  --context NafasLand.Admin.Modules.Identity.Persistence.IdentityDbContext \
   --connection "Server=localhost,1433;Database=NafasLandAdmin;User Id=sa;Password=<همان MSSQL_SA_PASSWORD>;TrustServerCertificate=True;"
 ```
 
 بررسی سلامت: `curl http://localhost:8080/health`.
 
-## اندپوینت‌های نمونه (ماژول Sample)
+## احراز هویت (ماژول Identity، گام ۱)
 
-این ماژول فقط برای اثبات کارکرد pipeline است و هیچ ربطی به محصولات ندارد؛
-در گام‌های بعد حذف یا جایگزین می‌شود.
+`TestUserAuthenticationHandler` و هدر `X-Test-Permissions` حذف شده‌اند.
+احراز هویت واقعی با کوکی است (ADR-013، ADR-023):
 
-- `POST /api/v1/sample/ping` با بدنهٔ `{ "message": "..." }` — یک رکورد در
-  جدول `sample.PingRecords` می‌نویسد. permission لازم: `sample.ping`.
-- `POST /api/v1/sample/unprotected-ping` — همیشه با ۴۰۳ رد می‌شود، چون
-  command اش هیچ permission ای تعریف نکرده (پیش‌فرض بسته، ADR-006).
+- کوکی سشن (`nafasland-admin-session`): `HttpOnly` + `SameSite=Strict`،
+  در Production همیشه `Secure`؛ ۸ ساعت با sliding expiration.
+- کوکی antiforgery (`nafasland-admin-antiforgery`) + هدر `X-XSRF-TOKEN`:
+  همهٔ درخواست‌های غیر-GET به‌جز خودِ `login` باید این هدر را با مقدار
+  `antiforgeryToken` برگشتی از `login` ارسال کنند، وگرنه `400` می‌گیرند.
+- در محیط Development (از جمله `compose.override.yaml`)، چون هنوز پروکسی
+  TLS‌کننده‌ای جلوی برنامه نیست، این دو کوکی با `SecurePolicy: SameAsRequest`
+  صادر می‌شوند تا تست با `curl` روی HTTP ممکن باشد؛ در Production همیشه
+  `Secure` هستند.
+- permissionهای مؤثر کاربر (و فلگ اجبار تغییر رمز) در **هر درخواست** از
+  دیتابیس دوباره محاسبه می‌شوند (ADR-021)؛ تغییر نقش یا Grant/Deny توسط
+  سوپرادمین بدون نیاز به ورود دوباره اثر می‌کند.
 
-احراز هویت واقعی کار گام ۱ است؛ فعلاً یک کاربر ساختگی همیشه احراز
-هویت‌شده وجود دارد که permissionهایش از هدر `X-Test-Permissions` (رشتهٔ
-جداشده با کاما) خوانده می‌شود:
+اولین ورود (با کاربر seed‌شدهٔ SuperAdmin)، سپس یک ping موفق روی ماژول
+Sample، دقیقاً مثل گام ۰ ولی حالا با هویت واقعی:
 
 ```bash
-# رد می‌شود: هیچ permission ای پاس داده نشده
-curl -i -X POST http://localhost:8080/api/v1/sample/ping \
-  -H "Content-Type: application/json" -d '{"message":"سلام"}'
+# ورود؛ کوکی‌ها را در cookies.txt نگه می‌داریم و antiforgeryToken را از پاسخ می‌خوانیم
+curl -i -X POST http://localhost:8080/api/v1/identity/auth/login \
+  -H "Content-Type: application/json" \
+  -c cookies.txt \
+  -d '{"username":"superadmin","password":"<رمز اولیه>"}'
+# پاسخ شامل mustChangePassword:true و antiforgeryToken است
 
-# قبول می‌شود
+# تا رمز عوض نشود، هر command دیگری جز change-password/logout رد می‌شود
+# (کد PASSWORD_CHANGE_REQUIRED، نه یک 403 معمولی):
+curl -i -X POST http://localhost:8080/api/v1/identity/auth/change-password \
+  -b cookies.txt -H "Content-Type: application/json" \
+  -H "X-XSRF-TOKEN: <antiforgeryToken>" \
+  -d '{"currentPassword":"<رمز اولیه>","newPassword":"<رمز جدید>"}'
+
+# حالا sample.ping کار می‌کند (SuperAdmin همهٔ permissionها را دارد)
 curl -i -X POST http://localhost:8080/api/v1/sample/ping \
-  -H "Content-Type: application/json" -H "X-Test-Permissions: sample.ping" \
+  -b cookies.txt -H "Content-Type: application/json" \
+  -H "X-XSRF-TOKEN: <antiforgeryToken>" \
   -d '{"message":"سلام"}'
 
-# همیشه ۴۰۳ (بدون permission تعریف‌شده روی command)
-curl -i -X POST http://localhost:8080/api/v1/sample/unprotected-ping \
-  -H "X-Test-Permissions: sample.ping"
+# بدون هدر antiforgery: 400، نه 401/403
+curl -i -X POST http://localhost:8080/api/v1/sample/ping \
+  -b cookies.txt -H "Content-Type: application/json" -d '{"message":"سلام"}'
+
+# پنج تلاش ناموفق پیاپی، حساب را ۱۵ دقیقه قفل می‌کند (423)؛ حتی رمز درست هم رد می‌شود
+for i in 1 2 3 4 5; do
+  curl -s -o /dev/null -w "%{http_code}\n" -X POST http://localhost:8080/api/v1/identity/auth/login \
+    -H "Content-Type: application/json" -d '{"username":"someone","password":"wrong"}'
+done
+curl -i -X POST http://localhost:8080/api/v1/identity/auth/login \
+  -H "Content-Type: application/json" -d '{"username":"someone","password":"<حتی رمز درست>"}'
 ```
+
+`POST /api/v1/sample/unprotected-ping` هنوز مثل گام ۰ همیشه ۴۰۳ می‌دهد
+(بدون permission تعریف‌شده روی command، پیش‌فرض بسته — ADR-006)؛ فقط حالا
+پشت احراز هویت واقعی است، نه هدر تستی.
+
+### اندپوینت‌های ماژول Identity (زیر `/api/v1/identity`)
+
+| Method و مسیر | دسترسی |
+| --- | --- |
+| `POST /auth/login` | Anonymous |
+| `POST /auth/logout` | هر کاربر واردشده |
+| `GET /auth/me` | هر کاربر واردشده |
+| `POST /auth/change-password` | هر کاربر واردشده |
+| `POST /users` | `identity.users.manage` |
+| `GET /users`, `GET /users/{id}` | `identity.users.manage` |
+| `POST /users/{id}/reset-password` | `identity.users.manage` |
+| `PUT /users/{id}/roles` | `identity.users.manage`؛ ۴۰۳ روی کاربر `IsProtected` |
+| `POST /users/{id}/toggle-active` | `identity.users.manage`؛ ۴۰۳ روی کاربر `IsProtected` |
+| `PUT /users/{id}/permissions/{permissionKey}` (بدنه: `{ "effect": "Grant" \| "Deny" \| null }`) | `identity.access.manage` |
+| `GET /permissions`, `GET /roles` | `identity.access.manage` |
+| `PUT /roles/{roleId}/permissions` | `identity.access.manage`؛ ۴۰۹ روی نقش `IsSystemManaged` (یعنی SuperAdmin) |
 
 ## متغیرهای محیطی (`.env`)
 
@@ -119,6 +189,8 @@ curl -i -X POST http://localhost:8080/api/v1/sample/unprotected-ping \
 | `DATABASE__CONNECTIONSTRING` | رشتهٔ اتصال کامل Api به `mssql` |
 | `PORTAL__BASEURL` | آدرس پایهٔ API پرتال (هنوز هیچ تماسی زده نمی‌شود) |
 | `PORTAL__TESTPRODUCTID` | شناسهٔ محصول تستی (هنوز ساخته نشده؛ نک. «موارد باز» پایین) |
+| `IDENTITY__SUPERADMIN__USERNAME` | نام کاربری اولین حساب SuperAdmin (فقط اگر هیچ SuperAdmin ای وجود نداشته باشد استفاده می‌شود) |
+| `IDENTITY__SUPERADMIN__PASSWORD` | رمز اولیهٔ همان حساب؛ در اولین ورود اجباراً عوض می‌شود |
 | `API_HTTP_PORT` | پورت باز شده به host فقط در حالت توسعه |
 
 ## Hangfire
@@ -136,15 +208,27 @@ dotnet build NafasLand.Admin.sln
 dotnet test NafasLand.Admin.sln
 ```
 
-هیچ تستی به SQL Server واقعی وصل نمی‌شود؛ تست‌های handler با یک
-`SampleDbContext` پیکربندی‌شده روی رشتهٔ اتصال ساختگی کار می‌کنند (فقط
-`Add` به ChangeTracker را امتحان می‌کنند، نه اتصال واقعی)، و تست معماری با
-پارس فایل‌های `.csproj` و reflection روی اسمبلی‌های ساخته‌شده کار می‌کند.
+هیچ تستی به SQL Server واقعی وصل نمی‌شود. تست‌های handler که فقط
+`Add` به ChangeTracker می‌کنند (مثل Sample's PingCommandHandler) با یک
+DbContext پیکربندی‌شده روی رشتهٔ اتصال ساختگی کار می‌کنند. برای Identity،
+قاعده‌های محافظتی که قبل از نوشتن نیاز به خواندن از دیتابیس دارند
+(رد نقش `IsSystemManaged`، رد Grant روی permission `IsSuperAdminOnly`، رد
+عملیات مخرب روی کاربر `IsProtected`) روی خودِ موجودیت‌ها
+(`Role.EnsureEditable`، `AppUser.EnsureNotProtected`،
+`SuperAdminOnlyPermissionGuard`) پیاده شده‌اند تا بدون اتصال واقعی هم قابل
+تست باشند — بدون بستهٔ EF Core In-Memory/SQLite که تأیید نشده بود. تست
+معماری با پارس فایل‌های `.csproj` و reflection روی اسمبلی‌های ساخته‌شده کار
+می‌کند.
+
+رفتار end-to-end (ورود، قفل حساب، antiforgery، permissionهای مؤثر) با
+`docker compose up` و `curl` واقعی هم دستی تأیید شده — مثال‌های بالا دقیقاً
+همان دستورهایی‌اند که در این بررسی اجرا شدند.
 
 ## موارد باز (نیاز به تصمیم یا اطلاعات بیرونی)
 
 - ساخت محصول تستی واقعی در پرتال و ثبت شناسه‌اش (`Portal:TestProductId`) —
-  کار موازی روی ROADMAP.
-- گام ۱ (Identity) باید مشخص کند احراز هویت واقعی چطور جایگزین
-  `TestUserAuthenticationHandler` می‌شود؛ فعلاً این هندلر صرفاً یک
-  جایگزین موقت برای تست pipeline است.
+  کار موازی روی ROADMAP، مربوط به گام ۳.
+- فهرست کامل ابهام‌ها و مفروضات این گام (طول حداقل رمز، ساختار بدنهٔ
+  ResetPassword، نبود ستون نمایشی روی `Permission`، محدودهٔ دقیق
+  `identity.users.manage` روی تغییر نقش) در توضیحات Pull Request این برنچ
+  آمده است.
