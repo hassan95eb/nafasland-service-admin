@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using NafasLand.Admin.Shared.Infrastructure.Authorization;
+using NafasLand.Admin.Shared.Infrastructure.CorrelationId;
 using NafasLand.Admin.Shared.Infrastructure.Messaging;
+using NafasLand.Admin.Shared.Kernel.Auditing;
 using NafasLand.Admin.Shared.Kernel.Errors;
 using NafasLand.Admin.Shared.Kernel.Messaging;
 using NafasLand.Admin.Shared.Kernel.Permissions;
@@ -22,7 +24,35 @@ public sealed class AuthorizationBehaviorTests
 
     private sealed record GateExemptCommand : ICommand<string>, IRequiresAuthenticatedUser, IAllowedWhenPasswordChangeRequired;
 
-    private static ServiceProvider BuildProvider(ClaimsPrincipal user)
+    private sealed record AuditableProtectedCommand(string RequiredPermission) : ICommand<string>, IRequiresPermission, IAuditableCommand
+    {
+        public string AuditAction => "SomethingAttempted";
+        public string AuditEntityType => "Something";
+    }
+
+    private sealed record AuditableUnprotectedCommand : ICommand<string>, IAuditableCommand
+    {
+        public string AuditAction => "SomethingAttempted";
+        public string AuditEntityType => "Something";
+    }
+
+    private sealed class FakeCorrelationIdAccessor : ICorrelationIdAccessor
+    {
+        public string CorrelationId => "test-correlation-id";
+    }
+
+    private sealed class FakeAuditLogWriter : IAuditLogWriter
+    {
+        public List<AuditLogEntry> WrittenEntries { get; } = [];
+
+        public Task WriteAsync(AuditLogEntry entry, CancellationToken cancellationToken)
+        {
+            WrittenEntries.Add(entry);
+            return Task.CompletedTask;
+        }
+    }
+
+    private static ServiceProvider BuildProvider(ClaimsPrincipal user, FakeAuditLogWriter? auditLogWriter = null)
     {
         var services = new ServiceCollection();
         services.AddLogging();
@@ -31,6 +61,9 @@ public sealed class AuthorizationBehaviorTests
 
         var httpContextAccessor = new HttpContextAccessor { HttpContext = new DefaultHttpContext { User = user } };
         services.AddSingleton<IHttpContextAccessor>(httpContextAccessor);
+
+        services.AddSingleton<ICorrelationIdAccessor, FakeCorrelationIdAccessor>();
+        services.AddSingleton<IAuditLogWriter>(auditLogWriter ?? new FakeAuditLogWriter());
 
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
         return services.BuildServiceProvider();
@@ -140,5 +173,47 @@ public sealed class AuthorizationBehaviorTests
         var result = await behavior.HandleAsync(new GateExemptCommand(), () => Task.FromResult("ok"), CancellationToken.None);
 
         Assert.Equal("ok", result);
+    }
+
+    [Fact]
+    public async Task رد_یک_IAuditableCommand_به‌خاطر_نبود_permission_یک_رکورد_Denied_می‌نویسد()
+    {
+        var auditLogWriter = new FakeAuditLogWriter();
+        var provider = BuildProvider(BuildUser("some.other.permission"), auditLogWriter);
+        var behavior = provider.GetRequiredService<IPipelineBehavior<AuditableProtectedCommand, string>>();
+
+        await Assert.ThrowsAsync<AuthorizationDeniedException>(() =>
+            behavior.HandleAsync(new AuditableProtectedCommand("sample.ping"), () => Task.FromResult("ok"), CancellationToken.None));
+
+        var entry = Assert.Single(auditLogWriter.WrittenEntries);
+        Assert.Equal(AuditOutcome.Denied, entry.Outcome);
+        Assert.Equal("SomethingAttempted", entry.Action);
+    }
+
+    [Fact]
+    public async Task رد_یک_IAuditableCommand_بدون_هیچ_مارکر_دسترسی_یک_رکورد_Denied_می‌نویسد()
+    {
+        var auditLogWriter = new FakeAuditLogWriter();
+        var provider = BuildProvider(BuildUser("anything"), auditLogWriter);
+        var behavior = provider.GetRequiredService<IPipelineBehavior<AuditableUnprotectedCommand, string>>();
+
+        await Assert.ThrowsAsync<AuthorizationDeniedException>(() =>
+            behavior.HandleAsync(new AuditableUnprotectedCommand(), () => Task.FromResult("ok"), CancellationToken.None));
+
+        var entry = Assert.Single(auditLogWriter.WrittenEntries);
+        Assert.Equal(AuditOutcome.Denied, entry.Outcome);
+    }
+
+    [Fact]
+    public async Task رد_یک_command_غیر_IAuditableCommand_هیچ_رکوردی_نمی‌نویسد()
+    {
+        var auditLogWriter = new FakeAuditLogWriter();
+        var provider = BuildProvider(BuildUser("anything"), auditLogWriter);
+        var behavior = provider.GetRequiredService<IPipelineBehavior<UnprotectedCommand, string>>();
+
+        await Assert.ThrowsAsync<AuthorizationDeniedException>(() =>
+            behavior.HandleAsync(new UnprotectedCommand(), () => Task.FromResult("ok"), CancellationToken.None));
+
+        Assert.Empty(auditLogWriter.WrittenEntries);
     }
 }

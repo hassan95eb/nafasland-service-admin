@@ -25,6 +25,12 @@ internal sealed class EffectivePermissionsProvider(IdentityDbContext dbContext) 
             return null;
         }
 
+        var roleNames = await dbContext.UserRoles
+            .AsNoTracking()
+            .Where(userRole => userRole.UserId == userId)
+            .Select(userRole => userRole.Role!.Name)
+            .ToListAsync(cancellationToken);
+
         var rolePermissionKeys = await dbContext.UserRoles
             .AsNoTracking()
             .Where(userRole => userRole.UserId == userId)
@@ -45,6 +51,6 @@ internal sealed class EffectivePermissionsProvider(IdentityDbContext dbContext) 
             .ToListAsync(cancellationToken);
 
         var effective = EffectivePermissionCalculator.Calculate(rolePermissionKeys, grantedKeys, deniedKeys);
-        return new EffectiveUserAccess(effective, user.MustChangePassword);
+        return new EffectiveUserAccess(effective, user.MustChangePassword, roleNames);
     }
 }

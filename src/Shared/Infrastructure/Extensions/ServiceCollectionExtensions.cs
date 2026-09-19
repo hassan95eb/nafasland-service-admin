@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using NafasLand.Admin.Shared.Infrastructure.Antiforgery;
+using NafasLand.Admin.Shared.Infrastructure.Auditing;
 using NafasLand.Admin.Shared.Infrastructure.Authorization;
 using NafasLand.Admin.Shared.Infrastructure.CorrelationId;
 using NafasLand.Admin.Shared.Infrastructure.ErrorHandling;
 using NafasLand.Admin.Shared.Infrastructure.Messaging;
+using NafasLand.Admin.Shared.Kernel.Auditing;
 using NafasLand.Admin.Shared.Kernel.Messaging;
 
 namespace NafasLand.Admin.Shared.Infrastructure.Extensions;
@@ -27,6 +30,17 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
         services.AddAuthorization();
+
+        // Same scoped instance behind both types (ADR-048): a Handler writes
+        // through the narrow Kernel interface, AuditBehavior reads the
+        // accumulated state back off the concrete type.
+        services.AddScoped<AuditContext>();
+        services.AddScoped<IAuditContext>(sp => sp.GetRequiredService<AuditContext>());
+
+        // Safe default so the pipeline resolves even without the Auditing module
+        // (tests, or that module disabled via feature flag) — AuditingModule
+        // registers the real writer afterwards, which then wins resolution.
+        services.TryAddScoped<IAuditLogWriter, NullAuditLogWriter>();
 
         services.AddScoped<ICommandDispatcher, CommandDispatcher>();
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));

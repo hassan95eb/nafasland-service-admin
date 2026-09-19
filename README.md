@@ -37,7 +37,7 @@ dotnet user-secrets set "Identity:SuperAdmin:Password" "<رمز اولیهٔ ق�
 ۲. یک SQL Server در دسترس داشته باش (مثلاً همان کانتینر `mssql` از
 `compose.yaml`، یا یک نصب محلی).
 
-۳. مهاجرت هر دو ماژول را اعمال کن (مهاجرت به‌صورت خودکار در استارتاپ اجرا
+۳. مهاجرت هر سه ماژول را اعمال کن (مهاجرت به‌صورت خودکار در استارتاپ اجرا
 نمی‌شود؛ ADR-041). چون بیش از یک `DbContext` وجود دارد، `--context` اجباری
 است:
 
@@ -51,6 +51,11 @@ dotnet ef database update \
   --project src/Modules/Identity/NafasLand.Admin.Modules.Identity.csproj \
   --startup-project src/Api/NafasLand.Admin.Api.csproj \
   --context NafasLand.Admin.Modules.Identity.Persistence.IdentityDbContext
+
+dotnet ef database update \
+  --project src/Modules/Auditing/NafasLand.Admin.Modules.Auditing.csproj \
+  --startup-project src/Api/NafasLand.Admin.Api.csproj \
+  --context NafasLand.Admin.Modules.Auditing.Persistence.AuditingDbContext
 ```
 
 ۴. اجرا:
@@ -84,7 +89,7 @@ docker compose -f compose.yaml -f compose.prod.yaml up -d --build
 
 **مهاجرت هنگام بالا آمدن کانتینر اجرا نمی‌شود.** بعد از بالا آمدن `mssql`
 (و پیش از آنکه `api` بتواند واقعاً کار کند، چون بررسی مهاجرت معوق در
-استارتاپ آن را متوقف می‌کند)، مهاجرت هر دو ماژول را از host اجرا کن — با
+استارتاپ آن را متوقف می‌کند)، مهاجرت هر سه ماژول را از host اجرا کن — با
 `compose.override.yaml`، پورت ۱۴۳۳ به host باز است:
 
 ```bash
@@ -98,6 +103,12 @@ dotnet ef database update \
   --project src/Modules/Identity/NafasLand.Admin.Modules.Identity.csproj \
   --startup-project src/Api/NafasLand.Admin.Api.csproj \
   --context NafasLand.Admin.Modules.Identity.Persistence.IdentityDbContext \
+  --connection "Server=localhost,1433;Database=NafasLandAdmin;User Id=sa;Password=<همان MSSQL_SA_PASSWORD>;TrustServerCertificate=True;"
+
+dotnet ef database update \
+  --project src/Modules/Auditing/NafasLand.Admin.Modules.Auditing.csproj \
+  --startup-project src/Api/NafasLand.Admin.Api.csproj \
+  --context NafasLand.Admin.Modules.Auditing.Persistence.AuditingDbContext \
   --connection "Server=localhost,1433;Database=NafasLandAdmin;User Id=sa;Password=<همان MSSQL_SA_PASSWORD>;TrustServerCertificate=True;"
 ```
 
@@ -179,6 +190,53 @@ curl -i -X POST http://localhost:8080/api/v1/identity/auth/login \
 | `GET /permissions`, `GET /roles` | `identity.access.manage` |
 | `PUT /roles/{roleId}/permissions` | `identity.access.manage`؛ ۴۰۹ روی نقش `IsSystemManaged` (یعنی SuperAdmin) |
 
+## گزارش فعالیت (ماژول Auditing، گام ۲)
+
+`AuditBehavior` (جایگاهش از گام ۰ رزرو شده بود) و یک تغییر کوچک در
+`AuthorizationBehavior` حالا واقعاً به جدول `AuditLog` می‌نویسند — فقط برای
+commandهایی که `IAuditableCommand` را پیاده کرده‌اند (فعلاً همین ماژول
+Identity's `ExportAuditLogCommand` و، صرفاً برای اثبات مکانیزم،
+`PingCommand` در ماژول Sample؛ نه command دیگری در Identity). سه Outcome:
+`Success` (بعد از اجرای موفق handler)، `Failed` (خطای handler/تراکنش، پیام
+خطا بدون stack trace)، `Denied` (رد به‌خاطر نبود permission یا نبود مارکر
+دسترسی — نوشته‌شده توسط خودِ `AuthorizationBehavior`، چون `AuditBehavior`
+هرگز به یک command ردشده نمی‌رسد).
+
+```bash
+# بعد از ping موفق، یک رکورد Success با Action=PingSent ثبت می‌شود
+curl -s http://localhost:8080/api/v1/audit/logs -b cookies.txt -H "X-XSRF-TOKEN: <token>"
+
+# فعالیت یک کاربر خاص: شمار به‌تفکیک Outcome + timeline صفحه‌بندی‌شده (keyset روی CreatedAt)
+curl -s http://localhost:8080/api/v1/audit/users/<userId> -b cookies.txt -H "X-XSRF-TOKEN: <token>"
+
+# خروجی CSV یا xlsx با همان فیلترها؛ خودش هم یک رکورد AuditExported ثبت می‌کند
+curl -s -X POST http://localhost:8080/api/v1/audit/export \
+  -b cookies.txt -H "Content-Type: application/json" -H "X-XSRF-TOKEN: <token>" \
+  -d '{"format":"csv"}' -o audit-log.csv
+```
+
+### اندپوینت‌های ماژول Auditing (زیر `/api/v1/audit`)
+
+| Method و مسیر | دسترسی |
+| --- | --- |
+| `GET /logs` | `audit.read.all` — فیلتر با query string، صفحه‌بندی keyset (`cursor`, `pageSize`) |
+| `GET /logs/{id}` | `audit.read.all` — جزئیات کامل یک رکورد (Before/After/ChangedFields دیسریالایز‌شده) |
+| `GET /users/{userId}` | `audit.read.all` — شمار به‌تفکیک Outcome + timeline صفحه‌بندی‌شده |
+| `GET /products/{externalProductId}` | `audit.read.all` — تاریخچهٔ یک محصول؛ نبود `ProductRef` خطا نمی‌دهد |
+| `POST /export` (بدنه: فیلترها + `format`: `csv`\|`xlsx`) | `audit.export` — یک `ICommand` واقعی، خودش لاگ می‌شود |
+| `GET /export/{jobId}/status`, `GET /export/{jobId}/download` | `audit.export` — فقط برای مسیر >۲۵٬۰۰۰ ردیف (job پس‌زمینه) |
+
+هر دو permission این ماژول `IsSuperAdminOnly` هستند؛ نقش Admin از هیچ‌کدام
+این شش endpoint چیزی نمی‌بیند (۴۰۳).
+
+پاک‌سازی ۶ماهه (ADR-015) یک Hangfire recurring job است (شناسهٔ
+`audit-log-purge`، هر روز ساعت ۰۳:۰۰ UTC — عددی دلخواه و کم‌ترافیک، نه
+عددی سنجیده‌شده با بار واقعی؛ به‌راحتی قابل تغییر است) که رکوردهای قدیمی‌تر
+از ۶ ماه را در `backups/audit-archive/*.jsonl.gz` بایگانی، از جدول اصلی حذف،
+و خودِ این عملیات را با `Action=AuditPurged` ثبت می‌کند. خروجی حجیم (بیش از
+۲۵٬۰۰۰ ردیف) هم یک Hangfire job است و فایلش در `backups/audit-exports/`
+می‌نشیند (هر دو مسیر از قبل در `.gitignore` هستند، چون زیرمجموعهٔ `backups/`اند).
+
 ## متغیرهای محیطی (`.env`)
 
 کلیدها در `.env.example` مستندند؛ هیچ مقدار واقعی در گیت نیست (ADR-039).
@@ -195,11 +253,12 @@ curl -i -X POST http://localhost:8080/api/v1/identity/auth/login \
 
 ## Hangfire
 
-Job runner این گام Hangfire است (ADR-012)، فقط وایر شده — هیچ job واقعی‌ای
-تعریف نشده. Hangfire هنگام اتصال، schema و جدول‌های داخلی خودش را زیر
-schema به نام `hangfire` می‌سازد؛ این رفتار خود کتابخانه است و به قاعدهٔ
-«مهاجرت خودکار در استارتاپ اجرا نمی‌شود» (ADR-041) که مخصوص مهاجرت‌های
-EF Core ماژول‌هاست مربوط نیست.
+Job runner این گام Hangfire است (ADR-012). از گام ۲ دو job واقعی دارد:
+پاک‌سازی دوره‌ای AuditLog (recurring) و خروجی حجیم export (enqueue یک‌باره).
+Hangfire هنگام اتصال، schema و جدول‌های داخلی خودش را زیر schema به نام
+`hangfire` می‌سازد؛ این رفتار خود کتابخانه است و به قاعدهٔ «مهاجرت خودکار در
+استارتاپ اجرا نمی‌شود» (ADR-041) که مخصوص مهاجرت‌های EF Core ماژول‌هاست
+مربوط نیست.
 
 ## تست
 
@@ -216,19 +275,22 @@ DbContext پیکربندی‌شده روی رشتهٔ اتصال ساختگی ک
 عملیات مخرب روی کاربر `IsProtected`) روی خودِ موجودیت‌ها
 (`Role.EnsureEditable`، `AppUser.EnsureNotProtected`،
 `SuperAdminOnlyPermissionGuard`) پیاده شده‌اند تا بدون اتصال واقعی هم قابل
-تست باشند — بدون بستهٔ EF Core In-Memory/SQLite که تأیید نشده بود. تست
-معماری با پارس فایل‌های `.csproj` و reflection روی اسمبلی‌های ساخته‌شده کار
-می‌کند.
+تست باشند. برای Auditing (که فیلتر/صفحه‌بندی keyset واقعاً به یک provider
+نیاز دارند)، طبق پرامپت گام ۲، از `Microsoft.EntityFrameworkCore.InMemory`
+استفاده شده — تنها در پروژه‌های تست، هیچ اثری روی زمان اجرای واقعی ندارد.
+تست معماری با پارس فایل‌های `.csproj` و reflection روی اسمبلی‌های ساخته‌شده
+کار می‌کند.
 
-رفتار end-to-end (ورود، قفل حساب، antiforgery، permissionهای مؤثر) با
-`docker compose up` و `curl` واقعی هم دستی تأیید شده — مثال‌های بالا دقیقاً
-همان دستورهایی‌اند که در این بررسی اجرا شدند.
+رفتار end-to-end (ورود، ping، رد دسترسی، خروجی csv/xlsx واقعی، ثبت
+`AuditExported`/`Denied`، ۴۰۳ برای Admin، ثبت واقعی recurring job پاک‌سازی
+در Hangfire) با `docker compose up` و `curl` واقعی هم دستی تأیید شده.
 
 ## موارد باز (نیاز به تصمیم یا اطلاعات بیرونی)
 
 - ساخت محصول تستی واقعی در پرتال و ثبت شناسه‌اش (`Portal:TestProductId`) —
   کار موازی روی ROADMAP، مربوط به گام ۳.
-- فهرست کامل ابهام‌ها و مفروضات این گام (طول حداقل رمز، ساختار بدنهٔ
+- فهرست کامل ابهام‌ها و مفروضات گام ۱ (طول حداقل رمز، ساختار بدنهٔ
   ResetPassword، نبود ستون نمایشی روی `Permission`، محدودهٔ دقیق
-  `identity.users.manage` روی تغییر نقش) در توضیحات Pull Request این برنچ
-  آمده است.
+  `identity.users.manage` روی تغییر نقش) و گام ۲ (جدول `AuditExportJob` که در
+  مدل دادهٔ پرامپت نبود، ستون‌های خروجی CSV/xlsx، معنای «اعلام آماده‌شدن»
+  export بدون ایمیل/پیامک) در توضیحات Pull Request این برنچ آمده است.

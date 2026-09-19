@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using NafasLand.Admin.Modules.Sample.Features.Ping;
 using NafasLand.Admin.Modules.Sample.Persistence;
+using NafasLand.Admin.Shared.Kernel.Auditing;
 
 namespace NafasLand.Admin.Modules.Sample.Tests.Features.Ping;
 
@@ -9,6 +10,21 @@ public sealed class PingCommandHandlerTests
     private sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => now;
+    }
+
+    private sealed class FakeAuditContext : IAuditContext
+    {
+        public void SetEntityId(string entityId)
+        {
+        }
+
+        public void SetBefore(object? snapshot)
+        {
+        }
+
+        public void SetAfter(object? snapshot)
+        {
+        }
     }
 
     // Never opens a real connection: Add only puts the record in the
@@ -27,7 +43,7 @@ public sealed class PingCommandHandlerTests
     {
         using var dbContext = CreateDbContext();
         var fixedNow = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
-        var handler = new PingCommandHandler(dbContext, new FixedTimeProvider(fixedNow));
+        var handler = new PingCommandHandler(dbContext, new FixedTimeProvider(fixedNow), new FakeAuditContext());
 
         var result = await handler.HandleAsync(new PingCommand("سلام"), CancellationToken.None);
 

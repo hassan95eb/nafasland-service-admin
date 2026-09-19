@@ -19,5 +19,11 @@ public interface IEffectivePermissionsProvider
 /// Effective permissions = (union of role permissions) + (direct Grant) −
 /// (direct Deny); Deny always wins (ADR-021). MustChangePassword is carried here
 /// too so it can be recomputed on the same per-request cadence as permissions.
+/// RoleNames (step 2) is added to the claims set as standard ClaimTypes.Role
+/// entries, purely for AuditLog's ActorRoleAtTime display field (ADR-009) — it
+/// is never used for an authorization check (ADR-001 forbids that).
 /// </summary>
-public sealed record EffectiveUserAccess(IReadOnlyCollection<string> Permissions, bool MustChangePassword);
+public sealed record EffectiveUserAccess(
+    IReadOnlyCollection<string> Permissions,
+    bool MustChangePassword,
+    IReadOnlyCollection<string> RoleNames);
