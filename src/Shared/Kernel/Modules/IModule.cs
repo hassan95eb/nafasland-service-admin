@@ -6,8 +6,9 @@ using NafasLand.Admin.Shared.Kernel.Permissions;
 namespace NafasLand.Admin.Shared.Kernel.Modules;
 
 /// <summary>
-/// نقطهٔ ثبت خودکار هر ماژول (ADR-005). هر ماژول یک پیاده‌سازی از این رابط دارد
-/// که با اسکن اسمبلی توسط میزبان (Api) پیدا و فعال می‌شود.
+/// Automatic registration point for each module (ADR-005). Each module has one
+/// implementation of this interface, discovered and activated by the host (Api)
+/// via assembly scanning.
 /// </summary>
 public interface IModule
 {

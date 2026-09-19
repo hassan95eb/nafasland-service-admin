@@ -16,7 +16,7 @@ RUN dotnet publish src/Api/NafasLand.Admin.Api.csproj -c Release -o /app --no-re
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
-# curl فقط برای healthcheck کانتینر لازم است (ADR-043)
+# curl is only needed for the container's healthcheck (ADR-043)
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*

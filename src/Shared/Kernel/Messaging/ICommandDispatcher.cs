@@ -1,8 +1,9 @@
 namespace NafasLand.Admin.Shared.Kernel.Messaging;
 
 /// <summary>
-/// نقطهٔ ورود endpoint ها به pipeline اجباری. هر دو پارامتر جنریک صریح داده
-/// می‌شوند چون TResponse از روی محدودیت interface قابل استنتاج نیست.
+/// Entry point for endpoints into the mandatory pipeline. Both generic parameters
+/// must be given explicitly, since TResponse cannot be inferred from the
+/// interface constraint.
 /// </summary>
 public interface ICommandDispatcher
 {

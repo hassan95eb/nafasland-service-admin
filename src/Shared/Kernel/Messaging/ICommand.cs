@@ -1,9 +1,9 @@
 namespace NafasLand.Admin.Shared.Kernel.Messaging;
 
 /// <summary>
-/// یک عملیات تغییردهنده که از pipeline اجباری عبور می‌کند (ADR-006).
+/// A mutating operation that flows through the mandatory pipeline (ADR-006).
 /// </summary>
-/// <typeparam name="TResponse">نوع پاسخ handler.</typeparam>
+/// <typeparam name="TResponse">The handler's response type.</typeparam>
 public interface ICommand<TResponse>
 {
 }

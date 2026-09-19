@@ -8,10 +8,10 @@ using NafasLand.Admin.Shared.Kernel.Permissions;
 namespace NafasLand.Admin.Shared.Infrastructure.Messaging;
 
 /// <summary>
-/// سومین حلقهٔ pipeline (ADR-006). پیش‌فرض بسته: commandی که
-/// <see cref="IRequiresPermission"/> را پیاده نکرده باشد رد می‌شود، حتی اگر
-/// کاربر هر permission ای داشته باشد. چک واقعی از طریق Authorization Policy و
-/// IAuthorizationHandler انجام می‌شود (ADR-001)، نه با خواندن مستقیم claim.
+/// The third link in the pipeline (ADR-006). Default-closed: a command that does
+/// not implement <see cref="IRequiresPermission"/> is rejected, no matter what
+/// permissions the user has. The actual check goes through an Authorization
+/// Policy and IAuthorizationHandler (ADR-001), not by reading the claim directly.
 /// </summary>
 internal sealed class AuthorizationBehavior<TCommand, TResponse>(
     IAuthorizationService authorizationService,

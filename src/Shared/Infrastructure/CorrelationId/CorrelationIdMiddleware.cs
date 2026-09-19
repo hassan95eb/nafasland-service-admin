@@ -4,8 +4,9 @@ using Serilog.Context;
 namespace NafasLand.Admin.Shared.Infrastructure.CorrelationId;
 
 /// <summary>
-/// CorrelationId را از هدر <c>X-Correlation-Id</c> می‌خواند یا می‌سازد، در
-/// LogContext سریلاگ منتشر می‌کند (ADR-036) و در هدر پاسخ برمی‌گرداند.
+/// Reads the correlation id from the <c>X-Correlation-Id</c> header or creates one,
+/// publishes it into Serilog's LogContext (ADR-036), and returns it in the
+/// response header.
 /// </summary>
 internal sealed class CorrelationIdMiddleware(RequestDelegate next)
 {

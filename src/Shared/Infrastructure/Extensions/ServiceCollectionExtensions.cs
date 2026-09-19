@@ -12,9 +12,10 @@ namespace NafasLand.Admin.Shared.Infrastructure.Extensions;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// زیرساخت مشترک: CorrelationId، Authorization Policy مبتنی بر permission،
-    /// و pipeline اجباری با ترتیب دقیق ADR-006. ترتیب ثبت زیر همان ترتیب
-    /// اجراست: Logging → Validation → Authorization → Transaction → Audit.
+    /// Shared infrastructure: CorrelationId, a permission-based Authorization
+    /// Policy, and the mandatory pipeline with the exact ADR-006 order. The
+    /// registration order below is the same as the execution order: Logging →
+    /// Validation → Authorization → Transaction → Audit.
     /// </summary>
     public static IServiceCollection AddSharedInfrastructure(this IServiceCollection services)
     {
@@ -42,7 +43,7 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// باید بعد از <c>UseAuthentication</c> فراخوانی شود (ADR-042).
+    /// Must be called after <c>UseAuthentication</c> (ADR-042).
     /// </summary>
     public static IApplicationBuilder UseUserContextLogging(this IApplicationBuilder app)
     {

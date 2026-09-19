@@ -3,8 +3,8 @@ using NafasLand.Admin.Shared.Kernel.Messaging;
 namespace NafasLand.Admin.Modules.Sample.Features.UnprotectedPing;
 
 /// <summary>
-/// این handler هرگز نباید اجرا شود؛ AuthorizationBehavior پیش از رسیدن به
-/// اینجا رد می‌کند (نبود IRequiresPermission).
+/// This handler should never run; AuthorizationBehavior rejects the command
+/// before it gets here (no IRequiresPermission).
 /// </summary>
 internal sealed class UnprotectedPingCommandHandler : ICommandHandler<UnprotectedPingCommand, UnprotectedPingResult>
 {

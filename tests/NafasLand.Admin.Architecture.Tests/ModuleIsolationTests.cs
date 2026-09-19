@@ -3,11 +3,12 @@ using System.Xml.Linq;
 namespace NafasLand.Admin.Architecture.Tests;
 
 /// <summary>
-/// دو قاعدهٔ ADR-004 / ADR-044 را تست می‌کند:
-/// ۱) هیچ ماژولی به ماژول دیگر رفرنس پروژه‌ای ندارد (فقط به Shared).
-/// ۲) هر چیزی بیرون از Contracts در یک ماژول internal است.
-/// با یک ماژول (Sample) این تست‌ها الان صفر تخلف پیدا می‌کنند؛ ولی همان
-/// چک است که با افزودن ماژول دوم (گام ۱) یک رفرنس اشتباه را رد می‌کند.
+/// Tests two ADR-004 / ADR-044 rules:
+/// 1) No module has a project reference to another module (only to Shared).
+/// 2) Everything outside Contracts in a module is internal.
+/// With a single module (Sample), these tests currently find zero violations;
+/// but it is the same check that will reject a wrong reference once a second
+/// module is added (step 1).
 /// </summary>
 public sealed class ModuleIsolationTests
 {

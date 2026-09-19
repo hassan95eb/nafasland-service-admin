@@ -11,9 +11,9 @@ public sealed class PingCommandHandlerTests
         public override DateTimeOffset GetUtcNow() => now;
     }
 
-    // بدون باز شدن اتصال واقعی: Add فقط رکورد را در ChangeTracker می‌گذارد؛
-    // این تنها چیزی است که handler انجام می‌دهد (SaveChanges کار
-    // TransactionBehavior/commit تراکنش است، نه handler).
+    // Never opens a real connection: Add only puts the record in the
+    // ChangeTracker, which is the only thing the handler does (SaveChanges is
+    // TransactionBehavior/commit's job, not the handler's).
     private static SampleDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<SampleDbContext>()

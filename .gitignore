@@ -7,7 +7,7 @@ obj/
 [Rr]elease/
 artifacts/
 
-# لاگ‌های اجرا (ADR-042) — تولید runtime، نه بخشی از مخزن
+# Runtime logs (ADR-042) — generated at runtime, not part of the repository
 logs/
 
 # محیط و اسرار

@@ -11,26 +11,26 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.12" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12" />
 
-    <!-- اعتبارسنجی (پرامپت گام ۰) -->
+    <!-- Validation (step 0 prompt) -->
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
 
-    <!-- رصدپذیری (ADR-042) -->
+    <!-- Observability (ADR-042) -->
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
 
-    <!-- job runner (ADR-012) -->
+    <!-- Job runner (ADR-012) -->
     <PackageVersion Include="Hangfire.AspNetCore" Version="1.8.25" />
     <PackageVersion Include="Hangfire.SqlServer" Version="1.8.25" />
 
     <!--
-      Hangfire.Core به Newtonsoft.Json 11.0.1 (یک آسیب‌پذیری شناخته‌شده)
-      وابسته است؛ این رفرنس صریح فقط نسخهٔ ترانزیتیو را با یک نسخهٔ اصلاح‌شده
-      جایگزین می‌کند، نه یک قابلیت جدید.
+      Hangfire.Core depends on Newtonsoft.Json 11.0.1 (a known vulnerability);
+      this explicit reference only replaces the transitive version with a patched
+      one, it is not a new capability.
     -->
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
 
-    <!-- تست -->
+    <!-- Tests -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />

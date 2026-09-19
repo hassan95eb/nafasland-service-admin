@@ -1,13 +1,15 @@
 namespace NafasLand.Admin.Shared.Kernel.Messaging;
 
 /// <summary>
-/// ادامهٔ pipeline پس از behavior فعلی؛ آخرین حلقه، فراخوانی handler است.
+/// Continuation of the pipeline after the current behavior; the final link calls
+/// the handler.
 /// </summary>
 public delegate Task<TResponse> CommandHandlerDelegate<TResponse>();
 
 /// <summary>
-/// یک حلقه از pipeline اجباری (ADR-006). ترتیب اجرا با ترتیب ثبت در DI تعیین
-/// می‌شود: Logging → Validation → Authorization → Transaction → Audit → Handler.
+/// One link in the mandatory pipeline (ADR-006). Execution order is determined by
+/// DI registration order: Logging → Validation → Authorization → Transaction →
+/// Audit → Handler.
 /// </summary>
 public interface IPipelineBehavior<TCommand, TResponse>
     where TCommand : ICommand<TResponse>

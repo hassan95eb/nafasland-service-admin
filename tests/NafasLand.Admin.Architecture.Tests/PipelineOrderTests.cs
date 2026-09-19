@@ -6,9 +6,9 @@ using NafasLand.Admin.Shared.Kernel.Messaging;
 namespace NafasLand.Admin.Architecture.Tests;
 
 /// <summary>
-/// ترتیب دقیق pipeline اجباری (ADR-006) را روی رجیستریشن واقعی
-/// AddSharedInfrastructure تضمین می‌کند: Logging → Validation →
-/// Authorization → Transaction → Audit.
+/// Guarantees the mandatory pipeline's exact order (ADR-006) against the real
+/// AddSharedInfrastructure registration: Logging → Validation → Authorization →
+/// Transaction → Audit.
 /// </summary>
 public sealed class PipelineOrderTests
 {

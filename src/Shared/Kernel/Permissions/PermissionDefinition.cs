@@ -1,15 +1,16 @@
 namespace NafasLand.Admin.Shared.Kernel.Permissions;
 
 /// <summary>
-/// معرفی یک permission توسط ماژول صاحبش (ADR-001، ADR-005). کلید به فرمت
-/// <c>&lt;resource&gt;.&lt;action&gt;</c> است و به‌صورت const داخل خود ماژول تعریف می‌شود.
+/// Declaration of a permission by the module that owns it (ADR-001, ADR-005). The
+/// key follows the <c>&lt;resource&gt;.&lt;action&gt;</c> format and is defined as a
+/// const inside the module itself.
 /// </summary>
 public sealed record PermissionDefinition(string Key, string DisplayName);
 
 /// <summary>
-/// یک command با پیاده‌سازی این رابط اعلام می‌کند به چه permission ای نیاز دارد.
-/// commandی که این رابط را پیاده نکند، طبق پیش‌فرض بسته (ADR-006) توسط
-/// AuthorizationBehavior رد می‌شود.
+/// A command implementing this interface declares which permission it requires.
+/// A command that does not implement this interface is rejected by
+/// AuthorizationBehavior under the default-closed rule (ADR-006).
 /// </summary>
 public interface IRequiresPermission
 {

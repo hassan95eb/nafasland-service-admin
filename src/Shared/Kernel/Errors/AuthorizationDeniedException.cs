@@ -1,8 +1,8 @@
 namespace NafasLand.Admin.Shared.Kernel.Errors;
 
 /// <summary>
-/// یک command بدون permission تعریف‌شده یا کاربر بدون آن permission رد شده
-/// است (پیش‌فرض بسته، ADR-006). به ۴۰۳ با ProblemDetails map می‌شود.
+/// A command with no permission defined, or a user lacking that permission, was
+/// rejected (default-closed, ADR-006). Maps to 403 with ProblemDetails.
 /// </summary>
 public sealed class AuthorizationDeniedException(string message) : Exception(message)
 {

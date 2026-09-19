@@ -9,13 +9,13 @@ using NafasLand.Admin.Shared.Kernel.Errors;
 namespace NafasLand.Admin.Shared.Infrastructure.ErrorHandling;
 
 /// <summary>
-/// همهٔ خطاهای مدیریت‌نشده را به ProblemDetails همراه با correlationId
-/// map می‌کند (ADR-036). پیام خام استثناهای پیش‌بینی‌نشده هرگز به کاربر
-/// نشان داده نمی‌شود؛ فقط در لاگ می‌ماند.
+/// Maps every unhandled exception to ProblemDetails along with the correlationId
+/// (ADR-036). The raw message of an unexpected exception is never shown to the
+/// user; it only stays in the log.
 ///
-/// AddExceptionHandler&lt;T&gt; این کلاس را Singleton ثبت می‌کند، پس
-/// ICorrelationIdAccessor (که Scoped است) از سازنده تزریق نمی‌شود؛ به‌جایش
-/// هر بار از RequestServices همان درخواست خوانده می‌شود.
+/// AddExceptionHandler&lt;T&gt; registers this class as a Singleton, so
+/// ICorrelationIdAccessor (which is Scoped) is not injected via the constructor;
+/// instead it is read from that request's RequestServices each time.
 /// </summary>
 internal sealed class ProblemDetailsExceptionHandler(ILogger<ProblemDetailsExceptionHandler> logger) : IExceptionHandler
 {
@@ -55,9 +55,10 @@ internal sealed class ProblemDetailsExceptionHandler(ILogger<ProblemDetailsExcep
         }
 
         httpContext.Response.StatusCode = problemDetails.Status ?? StatusCodes.Status500InternalServerError;
-        // به‌صورت object سریالایز می‌شود، نه ProblemDetails؛ وگرنه System.Text.Json
-        // فقط اعضای نوع اعلان‌شده (ProblemDetails) را می‌نویسد و فیلد errors ی که
-        // فقط روی ValidationProblemDetails است، از پاسخ حذف می‌شود.
+        // Serialized as object, not ProblemDetails; otherwise System.Text.Json
+        // only writes the members of the declared type (ProblemDetails), and the
+        // errors field, which only exists on ValidationProblemDetails, would be
+        // dropped from the response.
         await httpContext.Response.WriteAsJsonAsync((object)problemDetails, cancellationToken);
         return true;
     }

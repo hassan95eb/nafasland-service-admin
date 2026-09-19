@@ -4,9 +4,9 @@ using NafasLand.Admin.Shared.Kernel.Messaging;
 namespace NafasLand.Admin.Shared.Infrastructure.Messaging;
 
 /// <summary>
-/// ثبت به‌صورت Scoped می‌شود؛ <paramref name="serviceProvider"/> همان scope
-/// درخواست جاری است، پس همهٔ سرویس‌های scoped (مثل DbContext) که در طول این
-/// pipeline resolve می‌شوند، با بقیهٔ درخواست یکی‌اند.
+/// Registered as Scoped; <paramref name="serviceProvider"/> is the current
+/// request's own scope, so every scoped service (like a DbContext) resolved
+/// during this pipeline is the same instance as the rest of the request.
 /// </summary>
 internal sealed class CommandDispatcher(IServiceProvider serviceProvider) : ICommandDispatcher
 {

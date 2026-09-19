@@ -1,11 +1,11 @@
 namespace NafasLand.Admin.Shared.Infrastructure.Messaging;
 
 /// <summary>
-/// نام ماژول را از namespace یک command استخراج می‌کند (مثلاً از
-/// <c>NafasLand.Admin.Modules.Sample.Features.Ping</c> نتیجه‌اش <c>Sample</c>
-/// است). TransactionBehavior از این نام به‌عنوان کلید برای resolve کردن
-/// <see cref="Kernel.Persistence.IUnitOfWork"/> صحیح استفاده می‌کند تا با
-/// وجود چند ماژول دارای DbContext مبهم نشود.
+/// Extracts the module name from a command's namespace (e.g. from
+/// <c>NafasLand.Admin.Modules.Sample.Features.Ping</c> the result is
+/// <c>Sample</c>). TransactionBehavior uses this name as the key to resolve the
+/// correct <see cref="Kernel.Persistence.IUnitOfWork"/>, so it stays unambiguous
+/// once several modules have their own DbContext.
 /// </summary>
 internal static class ModuleNameResolver
 {

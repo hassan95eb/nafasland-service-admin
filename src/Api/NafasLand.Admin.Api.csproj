@@ -10,7 +10,7 @@
     <PackageReference Include="Serilog.AspNetCore" />
     <PackageReference Include="Serilog.Sinks.File" />
     <PackageReference Include="Newtonsoft.Json" />
-    <!-- فقط ابزار CLI مهاجرت (dotnet ef) از این استفاده می‌کند؛ در runtime لازم نیست -->
+    <!-- Only the migration CLI tool (dotnet ef) uses this; not needed at runtime -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -20,8 +20,9 @@
     <ProjectReference Include="..\Shared\Kernel\NafasLand.Admin.Shared.Kernel.csproj" />
     <ProjectReference Include="..\Shared\Infrastructure\NafasLand.Admin.Shared.Infrastructure.csproj" />
     <!--
-      رفرنس پروژه‌ای صرفاً برای این است که DLL ماژول کنار Api کپی شود؛
-      Program.cs با اسکن اسمبلی (ADR-005) پیدایش می‌کند، نه با ارجاع مستقیم به نوع‌هایش.
+      This project reference exists only so the module's DLL is copied next to
+      Api; Program.cs finds it via assembly scanning (ADR-005), not by referencing
+      its types directly.
     -->
     <ProjectReference Include="..\Modules\Sample\NafasLand.Admin.Modules.Sample.csproj" />
   </ItemGroup>

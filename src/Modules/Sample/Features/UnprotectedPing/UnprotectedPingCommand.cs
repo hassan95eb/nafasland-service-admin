@@ -3,9 +3,10 @@ using NafasLand.Admin.Shared.Kernel.Messaging;
 namespace NafasLand.Admin.Modules.Sample.Features.UnprotectedPing;
 
 /// <summary>
-/// عمداً <see cref="NafasLand.Admin.Shared.Kernel.Permissions.IRequiresPermission"/>
-/// را پیاده نمی‌کند تا ثابت شود AuthorizationBehavior چنین commandی را طبق
-/// پیش‌فرض بسته رد می‌کند، صرف‌نظر از دسترسی‌های کاربر (ADR-006).
+/// Deliberately does not implement
+/// <see cref="NafasLand.Admin.Shared.Kernel.Permissions.IRequiresPermission"/>, to
+/// prove that AuthorizationBehavior rejects such a command under the
+/// default-closed rule, regardless of the user's permissions (ADR-006).
 /// </summary>
 internal sealed record UnprotectedPingCommand : ICommand<UnprotectedPingResult>;
 

@@ -1,8 +1,8 @@
 namespace NafasLand.Admin.Modules.Sample.Persistence;
 
 /// <summary>
-/// رکوردی که با هر اجرای موفق PingCommand نوشته می‌شود تا تراکنش و مهاجرت
-/// این ماژول واقعاً امتحان شوند (هدف گام ۰).
+/// A record written on every successful PingCommand execution, so this module's
+/// transaction and migration are actually exercised (step 0's goal).
 /// </summary>
 internal sealed class PingRecord
 {

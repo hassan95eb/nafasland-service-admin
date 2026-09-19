@@ -5,9 +5,9 @@ using NafasLand.Admin.Shared.Kernel.Persistence;
 namespace NafasLand.Admin.Shared.Infrastructure.Messaging;
 
 /// <summary>
-/// چهارمین حلقهٔ pipeline (ADR-006). فقط برای commandهایی که ماژول‌شان یک
-/// <see cref="IUnitOfWork"/> ثبت کرده تراکنش باز می‌کند؛ commandهای بدون
-/// نیاز به نوشتن در دیتابیس بدون تراکنش رد می‌شوند.
+/// The fourth link in the pipeline (ADR-006). Only opens a transaction for
+/// commands whose module has registered an <see cref="IUnitOfWork"/>; commands
+/// with no need to write to the database pass through without a transaction.
 /// </summary>
 internal sealed class TransactionBehavior<TCommand, TResponse>(IServiceProvider serviceProvider)
     : IPipelineBehavior<TCommand, TResponse>

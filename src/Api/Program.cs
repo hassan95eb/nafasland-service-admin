@@ -14,8 +14,9 @@ using Serilog.Formatting.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ---------- Options pattern با اعتبارسنجی در استارتاپ (ADR-039، ADR-012) ----------
-// نبود یا نامعتبر بودن هرکدام یعنی برنامه بالا نمی‌آید، نه خطا در اولین درخواست.
+// ---------- Options pattern with startup validation (ADR-039, ADR-012) ----------
+// Any of these being missing or invalid means the app does not start, rather than
+// erroring on the first request.
 builder.Services
     .AddOptions<DatabaseOptions>()
     .Bind(builder.Configuration.GetSection(DatabaseOptions.SectionName))
@@ -34,16 +35,16 @@ builder.Services
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
-// ---------- رصدپذیری: Serilog با خروجی JSON و چرخش روزانه (ADR-042) ----------
+// ---------- Observability: Serilog with JSON output and daily rolling (ADR-042) ----------
 builder.Host.UseSerilog((context, _, loggerConfiguration) =>
 {
     var loggingOptions = context.Configuration.GetSection(LoggingOptions.SectionName).Get<LoggingOptions>()
         ?? new LoggingOptions();
     var minimumLevel = Enum.Parse<LogEventLevel>(loggingOptions.MinimumLevel);
 
-    // نسبت به AppContext.BaseDirectory حل می‌شود، نه working directory جاری؛
-    // وگرنه dotnet watch/dotnet ef/دات‌نت publish هرکدام یک پوشهٔ logs جدا
-    // و غیرقابل‌پیش‌بینی می‌سازند.
+    // Resolved against AppContext.BaseDirectory, not the current working
+    // directory; otherwise dotnet watch/dotnet ef/dotnet publish would each end
+    // up with a separate, unpredictable logs folder.
     var logDirectory = Path.IsPathRooted(loggingOptions.Directory)
         ? loggingOptions.Directory
         : Path.Combine(AppContext.BaseDirectory, loggingOptions.Directory);
@@ -59,17 +60,17 @@ builder.Host.UseSerilog((context, _, loggerConfiguration) =>
             rollingInterval: RollingInterval.Day);
 });
 
-// ---------- احراز هویت ساختگی این گام؛ مدل کامل Identity کار گام ۱ است ----------
+// ---------- This step's fake authentication; the full Identity model is step 1's job ----------
 builder.Services
     .AddAuthentication(TestUserAuthenticationHandler.SchemeName)
     .AddScheme<AuthenticationSchemeOptions, TestUserAuthenticationHandler>(
         TestUserAuthenticationHandler.SchemeName,
         _ => { });
 
-// ---------- زیرساخت مشترک: CorrelationId، Authorization Policy، pipeline اجباری (ADR-006، ADR-036) ----------
+// ---------- Shared infrastructure: CorrelationId, Authorization Policy, mandatory pipeline (ADR-006, ADR-036) ----------
 builder.Services.AddSharedInfrastructure();
 
-// ---------- job runner وایر می‌شود، بدون job واقعی (ADR-012) ----------
+// ---------- Job runner is wired up, with no real job (ADR-012) ----------
 builder.Services.AddHangfire((serviceProvider, config) =>
 {
     var databaseOptions = serviceProvider.GetRequiredService<IOptions<DatabaseOptions>>().Value;
@@ -81,15 +82,16 @@ builder.Services.AddHangfire((serviceProvider, config) =>
 builder.Services.AddHangfireServer();
 builder.Services.AddHealthChecks().AddCheck<HangfireHealthCheck>("job-runner");
 
-// ---------- ماژول‌ها: کشف خودکار با اسکن اسمبلی (ADR-005)؛ ماژول خاموش رجیستر نمی‌شود (ADR-012) ----------
+// ---------- Modules: automatic discovery via assembly scanning (ADR-005); a disabled module is never registered (ADR-012) ----------
 var moduleDiscovery = builder.Services.AddModules(builder.Configuration);
 
 var app = builder.Build();
 
-// اعتبارسنجی کانفیگ باید همین‌جا و صریح باشد، نه هروقت اولین مصرف‌کننده
-// (مثل SampleModule یا Hangfire) به آن نیاز داشت؛ وگرنه کانفیگ نامعتبری که
-// هنوز مصرف‌کننده‌اش اجرا نشده، به‌جای پیام روشن OptionsValidationException،
-// به یک خطای اتصال گنگ در وسط اجرا می‌رسد (ADR-039).
+// Config validation must happen right here, explicitly, rather than whenever the
+// first consumer (like SampleModule or Hangfire) happens to need it; otherwise
+// invalid config whose consumer hasn't run yet surfaces as a confusing
+// mid-execution connection error instead of a clear OptionsValidationException
+// (ADR-039).
 _ = app.Services.GetRequiredService<IOptions<DatabaseOptions>>().Value;
 _ = app.Services.GetRequiredService<IOptions<PortalOptions>>().Value;
 _ = app.Services.GetRequiredService<IOptions<LoggingOptions>>().Value;
@@ -104,7 +106,7 @@ Log.Information(
     enabledModuleNames,
     disabledModuleNames);
 
-// ---------- بررسی مهاجرت معوق؛ اجرای خودکار مهاجرت در استارتاپ ممنوع است (ADR-041) ----------
+// ---------- Check for pending migrations; automatic migration at startup is forbidden (ADR-041) ----------
 await using (var scope = app.Services.CreateAsyncScope())
 {
     var migrationChecks = scope.ServiceProvider.GetServices<IMigrationCheck>();

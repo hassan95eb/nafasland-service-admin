@@ -4,8 +4,8 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 namespace NafasLand.Admin.Api.HealthChecks;
 
 /// <summary>
-/// بررسی وضعیت job runner برای <c>/health</c> (ADR-042). در این گام هیچ job
-/// واقعی‌ای وجود ندارد؛ فقط بررسی می‌شود storage در دسترس است.
+/// Checks the job runner's status for <c>/health</c> (ADR-042). At this step no
+/// real job exists; it only checks that the storage is reachable.
 /// </summary>
 internal sealed class HangfireHealthCheck(JobStorage jobStorage) : IHealthCheck
 {

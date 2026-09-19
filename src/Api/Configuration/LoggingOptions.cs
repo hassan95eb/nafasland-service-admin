@@ -3,9 +3,9 @@ using System.ComponentModel.DataAnnotations;
 namespace NafasLand.Admin.Api.Configuration;
 
 /// <summary>
-/// عمداً هم‌نام بخش استاندارد «Logging» نیست (که برای LogLevel providerهای
-/// پیش‌فرض dotnet است)؛ این بخش فقط تنظیمات فایل لاگ Serilog را می‌خواند
-/// (ADR-042).
+/// Deliberately not named the same as the standard "Logging" section (which is
+/// for dotnet's default LogLevel providers); this section only reads Serilog's
+/// log file settings (ADR-042).
 /// </summary>
 public sealed class LoggingOptions
 {
