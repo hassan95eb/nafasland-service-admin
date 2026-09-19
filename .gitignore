@@ -7,6 +7,9 @@ obj/
 [Rr]elease/
 artifacts/
 
+# لاگ‌های اجرا (ADR-042) — تولید runtime، نه بخشی از مخزن
+logs/
+
 # محیط و اسرار
 .env
 .env.*

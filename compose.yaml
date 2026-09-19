@@ -1,0 +1,46 @@
+name: nafasland-admin
+
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?رمز sa در .env تعریف نشده است}
+    volumes:
+      - mssql-data:/var/opt/mssql
+      - ./backups:/backups
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Database__ConnectionString: ${DATABASE__CONNECTIONSTRING:?رشتهٔ اتصال در .env تعریف نشده است}
+      Portal__BaseUrl: ${PORTAL__BASEURL:?آدرس پرتال در .env تعریف نشده است}
+      Portal__TestProductId: ${PORTAL__TESTPRODUCTID:?شناسهٔ محصول تستی در .env تعریف نشده است}
+    volumes:
+      - api-logs:/app/logs
+    depends_on:
+      mssql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+volumes:
+  mssql-data:
+  api-logs:

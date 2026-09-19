@@ -1,0 +1,37 @@
+services:
+  mssql:
+    ports:
+      - "1433:1433"
+
+  api:
+    build:
+      target: build
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+    ports:
+      - "${API_HTTP_PORT:-8080}:8080"
+    command: ["dotnet", "watch", "run", "--no-launch-profile", "--project", "src/Api/NafasLand.Admin.Api.csproj"]
+    volumes:
+      - ./src:/src/src
+      - api-logs:/app/logs
+      # obj/bin هر پروژه عمداً shadow می‌شود؛ کانتینر (root) و host دو
+      # artifact جدا می‌نویسند، وگرنه فایل‌های root-owned روی host جا می‌ماند
+      # و بیلد بعدی روی host را خراب می‌کند.
+      - api-obj:/src/src/Api/obj
+      - api-bin:/src/src/Api/bin
+      - kernel-obj:/src/src/Shared/Kernel/obj
+      - kernel-bin:/src/src/Shared/Kernel/bin
+      - infrastructure-obj:/src/src/Shared/Infrastructure/obj
+      - infrastructure-bin:/src/src/Shared/Infrastructure/bin
+      - sample-obj:/src/src/Modules/Sample/obj
+      - sample-bin:/src/src/Modules/Sample/bin
+
+volumes:
+  api-obj:
+  api-bin:
+  kernel-obj:
+  kernel-bin:
+  infrastructure-obj:
+  infrastructure-bin:
+  sample-obj:
+  sample-bin:
