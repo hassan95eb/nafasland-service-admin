@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace NafasLand.Admin.Shared.Infrastructure.Authorization;
 
 /// <summary>
-/// چک دسترسی همیشه روی permission است، هرگز روی نام نقش (ADR-001).
+/// The access check is always on the permission, never on the role name (ADR-001).
 /// </summary>
 internal sealed class PermissionAuthorizationHandler : AuthorizationHandler<PermissionRequirement>
 {

@@ -5,9 +5,9 @@ using NafasLand.Admin.Shared.Kernel.Messaging;
 namespace NafasLand.Admin.Shared.Infrastructure.Messaging;
 
 /// <summary>
-/// اولین حلقهٔ pipeline (ADR-006). شروع و پایان اجرای command را با مدت زمان
-/// لاگ می‌کند؛ CorrelationId از طریق LogContext (میان‌افزار) به‌طور خودکار
-/// به این لاگ‌ها اضافه می‌شود.
+/// The first link in the pipeline (ADR-006). Logs the start and end of a
+/// command's execution along with its duration; CorrelationId is added to these
+/// log entries automatically via LogContext (the middleware).
 /// </summary>
 internal sealed class LoggingBehavior<TCommand, TResponse>(ILogger<LoggingBehavior<TCommand, TResponse>> logger)
     : IPipelineBehavior<TCommand, TResponse>

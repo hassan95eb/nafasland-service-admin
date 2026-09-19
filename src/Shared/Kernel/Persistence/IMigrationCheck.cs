@@ -1,7 +1,7 @@
 namespace NafasLand.Admin.Shared.Kernel.Persistence;
 
 /// <summary>
-/// نتیجهٔ بررسی مهاجرت معوق یک DbContext.
+/// Result of checking a DbContext for pending migrations.
 /// </summary>
 public sealed record MigrationCheckResult(string ContextName, IReadOnlyList<string> PendingMigrations)
 {
@@ -9,8 +9,9 @@ public sealed record MigrationCheckResult(string ContextName, IReadOnlyList<stri
 }
 
 /// <summary>
-/// هر ماژول با DbContext یکی از این‌ها را ثبت می‌کند تا در استارتاپ بررسی شود
-/// که مهاجرت معوقی نمانده باشد (ADR-041). مهاجرت خودکار اجرا نمی‌شود؛ فقط بررسی.
+/// Each module with a DbContext registers one of these so startup can check that
+/// no migration is pending (ADR-041). Migrations are never applied automatically;
+/// this only checks.
 /// </summary>
 public interface IMigrationCheck
 {

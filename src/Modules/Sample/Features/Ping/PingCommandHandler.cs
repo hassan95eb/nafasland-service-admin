@@ -4,8 +4,8 @@ using NafasLand.Admin.Shared.Kernel.Messaging;
 namespace NafasLand.Admin.Modules.Sample.Features.Ping;
 
 /// <summary>
-/// فقط رکورد را به ChangeTracker اضافه می‌کند؛ SaveChanges توسط
-/// TransactionBehavior در commit تراکنش صدا زده می‌شود.
+/// Only adds the record to the ChangeTracker; SaveChanges is called by
+/// TransactionBehavior when the transaction commits.
 /// </summary>
 internal sealed class PingCommandHandler(SampleDbContext dbContext, TimeProvider timeProvider)
     : ICommandHandler<PingCommand, PingResult>

@@ -14,9 +14,9 @@ services:
     volumes:
       - ./src:/src/src
       - api-logs:/app/logs
-      # obj/bin هر پروژه عمداً shadow می‌شود؛ کانتینر (root) و host دو
-      # artifact جدا می‌نویسند، وگرنه فایل‌های root-owned روی host جا می‌ماند
-      # و بیلد بعدی روی host را خراب می‌کند.
+      # Each project's obj/bin is deliberately shadowed; the container (root)
+      # and the host write two separate sets of artifacts, otherwise
+      # root-owned files are left on the host and break the next host build.
       - api-obj:/src/src/Api/obj
       - api-bin:/src/src/Api/bin
       - kernel-obj:/src/src/Shared/Kernel/obj

@@ -5,14 +5,14 @@ using NafasLand.Admin.Shared.Kernel.Modules;
 namespace NafasLand.Admin.Shared.Infrastructure.ModuleDiscovery;
 
 /// <summary>
-/// اسکن اسمبلی‌های کنار Api برای پیدا کردن پیاده‌سازی‌های <see cref="IModule"/>
-/// (ADR-005). ماژول از روی نام اسمبلی‌اش (پس از پیشوند) کشف می‌شود، پس
-/// افزودن ماژول جدید فقط اضافه‌کردن یک پروژه است، نه ویرایش Program.cs.
-/// فلگ فیچر هر ماژول با کلید <c>Modules:&lt;نام&gt;:Enabled</c> در کانفیگ
-/// کنترل می‌شود (ADR-012)؛ ماژول خاموش اصلاً رجیستر نمی‌شود.
-/// این کلاس قبل از build شدن سرویس‌ها اجرا می‌شود، پس عمداً به هیچ لاگری
-/// وابسته نیست؛ خلاصهٔ نتیجه در <see cref="ModuleDiscoveryResult"/> برمی‌گردد
-/// تا میزبان بعد از build آن را لاگ کند.
+/// Scans the assemblies next to Api to find <see cref="IModule"/> implementations
+/// (ADR-005). A module is discovered from its assembly name (after the prefix),
+/// so adding a new module is only adding a project, not editing Program.cs. Each
+/// module's feature flag is controlled by the <c>Modules:&lt;name&gt;:Enabled</c>
+/// config key (ADR-012); a disabled module is never registered at all. This class
+/// runs before services are built, so it deliberately does not depend on any
+/// logger; the summary is returned in <see cref="ModuleDiscoveryResult"/> so the
+/// host can log it after build.
 /// </summary>
 public static class ModuleDiscoverer
 {

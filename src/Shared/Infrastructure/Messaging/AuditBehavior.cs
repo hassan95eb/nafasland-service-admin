@@ -3,9 +3,10 @@ using NafasLand.Admin.Shared.Kernel.Messaging;
 namespace NafasLand.Admin.Shared.Infrastructure.Messaging;
 
 /// <summary>
-/// پنجمین حلقهٔ pipeline (ADR-006) — عمداً فقط یک اسکلت است. جایگاهش در
-/// pipeline از همین گام تثبیت می‌شود تا ماژول Auditing در گام ۲ (ADR-009)
-/// بدون جابه‌جایی ترتیب سایر behaviorها اضافه شود. فعلاً فقط عبور می‌دهد.
+/// The fifth link in the pipeline (ADR-006) — deliberately just a skeleton for
+/// now. Its place in the pipeline is fixed from this step so the Auditing module
+/// can be added in step 2 (ADR-009) without reordering the other behaviors. For
+/// now it simply passes through.
 /// </summary>
 internal sealed class AuditBehavior<TCommand, TResponse> : IPipelineBehavior<TCommand, TResponse>
     where TCommand : ICommand<TResponse>

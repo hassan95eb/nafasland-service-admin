@@ -1,8 +1,8 @@
 namespace NafasLand.Admin.Modules.Sample;
 
 /// <summary>
-/// کلید permission های ماژول Sample، به‌صورت const داخل خود ماژول (ADR-005)،
-/// نه در یک enum مرکزی.
+/// Permission keys for the Sample module, as consts inside the module itself
+/// (ADR-005), not in a central enum.
 /// </summary>
 internal static class SamplePermissions
 {

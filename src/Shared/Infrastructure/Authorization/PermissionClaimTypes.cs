@@ -3,9 +3,9 @@ namespace NafasLand.Admin.Shared.Infrastructure.Authorization;
 public static class PermissionClaimTypes
 {
     /// <summary>
-    /// نوع claim ای که permissionهای مؤثر کاربر در آن نگه داشته می‌شود.
-    /// محاسبهٔ permission مؤثر واقعی (نقش‌ها + Grant − Deny) کار گام ۱ است؛
-    /// در این مرحله فقط از روی claim خوانده می‌شود.
+    /// The claim type holding a user's effective permissions. Computing the real
+    /// effective permission set (roles + Grant − Deny) is step 1's job; at this
+    /// stage it is simply read from the claim.
     /// </summary>
     public const string Permission = "permission";
 }

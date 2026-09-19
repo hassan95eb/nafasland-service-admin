@@ -6,8 +6,9 @@ using NafasLand.Admin.Shared.Kernel.Messaging;
 namespace NafasLand.Admin.Shared.Infrastructure.Messaging;
 
 /// <summary>
-/// دومین حلقهٔ pipeline (ADR-006). اگر برای command ای validator ثبت نشده
-/// باشد، بدون خطا رد می‌شود؛ نه هر commandی الزاماً قاعدهٔ اعتبارسنجی دارد.
+/// The second link in the pipeline (ADR-006). If no validator is registered for a
+/// command, it passes through without error; not every command necessarily has a
+/// validation rule.
 /// </summary>
 internal sealed class ValidationBehavior<TCommand, TResponse>(IServiceProvider serviceProvider)
     : IPipelineBehavior<TCommand, TResponse>

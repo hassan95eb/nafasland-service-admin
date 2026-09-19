@@ -5,7 +5,7 @@ using NafasLand.Admin.Shared.Kernel.Persistence;
 namespace NafasLand.Admin.Modules.Sample.Persistence;
 
 /// <summary>
-/// هر ماژول schema دیتابیس خودش را دارد (ADR-004، ADR-019).
+/// Each module has its own database schema (ADR-004, ADR-019).
 /// </summary>
 internal sealed class SampleDbContext(DbContextOptions<SampleDbContext> options) : DbContext(options), IUnitOfWork
 {

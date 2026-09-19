@@ -4,9 +4,9 @@ using NafasLand.Admin.Shared.Kernel.Persistence;
 namespace NafasLand.Admin.Shared.Infrastructure.Persistence;
 
 /// <summary>
-/// پیاده‌سازی عمومی <see cref="IMigrationCheck"/> برای هر DbContext. هر ماژول
-/// این را برای DbContext خودش با <c>TContext</c> بسته می‌کند و در DI ثبت
-/// می‌کند (ADR-041).
+/// Generic implementation of <see cref="IMigrationCheck"/> for any DbContext.
+/// Each module closes this over its own DbContext as <c>TContext</c> and
+/// registers it in DI (ADR-041).
 /// </summary>
 public sealed class EfCoreMigrationCheck<TContext>(TContext dbContext) : IMigrationCheck
     where TContext : DbContext

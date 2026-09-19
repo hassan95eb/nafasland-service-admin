@@ -3,9 +3,9 @@ using System.ComponentModel.DataAnnotations;
 namespace NafasLand.Admin.Api.Configuration;
 
 /// <summary>
-/// جای‌گیر تنظیمات پرتال طبق ADR-039/ADR-012: باید از همین گام تعریف و در
-/// استارتاپ اعتبارسنجی شود، حتی پیش از آنکه ماژول Catalog (گام ۳) واقعاً از
-/// آن استفاده کند. هیچ تماسی با پرتال در این گام انجام نمی‌شود.
+/// Placeholder for portal settings per ADR-039/ADR-012: must be defined and
+/// validated at startup from this step on, even before the Catalog module (step
+/// 3) actually uses it. No call to the portal is made at this step.
 /// </summary>
 public sealed class PortalOptions
 {

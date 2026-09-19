@@ -8,10 +8,10 @@ namespace NafasLand.Admin.Shared.Infrastructure.Extensions;
 public static class ModuleHostExtensions
 {
     /// <summary>
-    /// همهٔ ماژول‌های فعال را کشف و <see cref="IModule.RegisterServices"/> هرکدام
-    /// را فرا می‌خواند (ADR-005). نتیجه را برمی‌گرداند تا هم
-    /// <see cref="MapModuleEndpoints"/> بعداً همان نمونه‌ها را map کند و هم
-    /// میزبان بتواند خلاصهٔ کشف را (بعد از build) لاگ کند.
+    /// Discovers every enabled module and calls each one's
+    /// <see cref="IModule.RegisterServices"/> (ADR-005). Returns the result so
+    /// <see cref="MapModuleEndpoints"/> can later map the same instances, and so
+    /// the host can log a discovery summary (after build).
     /// </summary>
     public static ModuleDiscoveryResult AddModules(this IServiceCollection services, IConfiguration configuration)
     {

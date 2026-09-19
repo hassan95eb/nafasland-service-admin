@@ -5,8 +5,8 @@ using Serilog.Context;
 namespace NafasLand.Admin.Shared.Infrastructure.CorrelationId;
 
 /// <summary>
-/// شناسهٔ کاربر را در LogContext منتشر می‌کند (ADR-042). باید بعد از
-/// <c>UseAuthentication</c> ثبت شود تا claims کاربر آماده باشد.
+/// Publishes the user id into LogContext (ADR-042). Must be registered after
+/// <c>UseAuthentication</c> so the user's claims are ready.
 /// </summary>
 internal sealed class UserContextLoggingMiddleware(RequestDelegate next)
 {

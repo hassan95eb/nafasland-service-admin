@@ -17,8 +17,8 @@ using NafasLand.Admin.Shared.Kernel.Permissions;
 namespace NafasLand.Admin.Modules.Sample;
 
 /// <summary>
-/// ماژول نمونهٔ گام ۰: اثبات اینکه IModule، pipeline، دیتابیس و مهاجرت با هم
-/// کار می‌کنند. هیچ منطق محصولی ندارد.
+/// Step 0's sample module: proves that IModule, the pipeline, the database, and
+/// migrations all work together. It has no product logic.
 /// </summary>
 internal sealed class SampleModule : IModule
 {
@@ -32,8 +32,8 @@ internal sealed class SampleModule : IModule
                 sql => sql.MigrationsHistoryTable("__EFMigrationsHistory", SampleDbContext.SchemaName));
         });
 
-        // کلید باید دقیقاً با نام ماژول در namespace هماهنگ باشد؛
-        // ModuleNameResolver همین رشته را از namespace هر command استخراج می‌کند.
+        // The key must match the module name in the namespace exactly;
+        // ModuleNameResolver extracts this same string from each command's namespace.
         services.AddKeyedScoped<IUnitOfWork>(
             "Sample",
             (serviceProvider, _) => serviceProvider.GetRequiredService<SampleDbContext>());

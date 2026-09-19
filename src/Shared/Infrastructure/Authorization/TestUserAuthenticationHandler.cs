@@ -7,10 +7,10 @@ using Microsoft.Extensions.Options;
 namespace NafasLand.Admin.Shared.Infrastructure.Authorization;
 
 /// <summary>
-/// جایگزین موقت مدل کامل Identity که کار گام ۱ است. یک کاربر ساختگی با
-/// شناسهٔ ثابت می‌سازد که همیشه احراز هویت شده است؛ permissionهایش از هدر
-/// <c>X-Test-Permissions</c> (رشتهٔ جداشده با کاما) خوانده می‌شود تا بشود هم
-/// مسیر مجاز و هم مسیر رد‌شده را روی همان endpoint امتحان کرد.
+/// Temporary stand-in for the full Identity model, which is step 1's job. Builds a
+/// fake user with a fixed id who is always authenticated; its permissions are read
+/// from the <c>X-Test-Permissions</c> header (a comma-separated string) so both the
+/// allowed and the rejected path can be exercised on the same endpoint.
 /// </summary>
 public sealed class TestUserAuthenticationHandler(
     IOptionsMonitor<AuthenticationSchemeOptions> options,

@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations;
 namespace NafasLand.Admin.Shared.Infrastructure.Configuration;
 
 /// <summary>
-/// یک رشتهٔ اتصال برای کل پنل، مشترک بین همهٔ ماژول‌ها؛ جداسازی با schema
-/// انجام می‌شود، نه با دیتابیس یا اتصال جدا (ADR-019).
+/// One connection string for the whole panel, shared by all modules; isolation is
+/// done with schemas, not with a separate database or connection (ADR-019).
 /// </summary>
 public sealed class DatabaseOptions
 {
