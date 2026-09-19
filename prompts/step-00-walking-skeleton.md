@@ -55,19 +55,52 @@
 - FluentValidation
 - Hangfire یا Quartz به‌عنوان job runner (فقط وایر شود، بدون job واقعی)
 
-## ساختار پوشه‌ها (ADR-004)
+## ساختار مخزن و نام‌گذاری (ADR-044)
+
+پیشوند همهٔ پروژه‌ها `NafasLand.Admin` است. ساختار دقیق:
 
 ```
-src/
-├─ Api/                  host و Program.cs
-├─ Shared/
-│  ├─ Kernel/            Result<T>, IModule, IDomainEvent, PermissionDefinition, base types
-│  └─ Infrastructure/    pipeline behaviors، permission handler، Options، لاگ
-└─ Modules/
-   └─ Sample/            یک ماژول نمونه، فقط برای اثبات کارکرد اسکلت
-tests/
-└─ <پروژه‌های تست متناظر>
+.
+├─ NafasLand.Admin.sln
+├─ Directory.Build.props        nullable فعال، TreatWarningsAsErrors، نسخهٔ زبان
+├─ Directory.Packages.props     مدیریت متمرکز نسخهٔ پکیج‌ها
+├─ .editorconfig  .gitignore  .dockerignore
+├─ .env.example                 فقط کلیدها، بدون هیچ مقدار واقعی
+├─ compose.yaml                 پایه
+├─ compose.override.yaml        توسعه: پورت‌های باز، hot reload
+├─ compose.prod.yaml            استقرار: restart policy، بدون پورت باز دیتابیس
+├─ docker/
+│  ├─ api/Dockerfile            چندمرحله‌ای، اجرا با کاربر غیر root
+│  ├─ mssql/                    اسکریپت راه‌اندازی اولیه در صورت نیاز
+│  ├─ web/                      خالی، برای گام ۴
+│  └─ proxy/                    خالی، برای گام ۴
+├─ src/
+│  ├─ Api/                      NafasLand.Admin.Api
+│  ├─ Shared/
+│  │  ├─ Kernel/                NafasLand.Admin.Shared.Kernel
+│  │  └─ Infrastructure/        NafasLand.Admin.Shared.Infrastructure
+│  ├─ Modules/
+│  │  └─ Sample/                NafasLand.Admin.Modules.Sample
+│  │     ├─ Contracts/          تنها بخش public ماژول
+│  │     ├─ Features/Ping/      PingCommand، Handler، Validator، Endpoint در یک پوشه
+│  │     ├─ Persistence/        DbContext، Configurations، Migrations
+│  │     ├─ SamplePermissions.cs
+│  │     └─ SampleModule.cs
+│  └─ Web/                      خالی با یک .gitkeep — فرانت در گام ۴
+├─ tests/
+│  ├─ NafasLand.Admin.Architecture.Tests
+│  ├─ NafasLand.Admin.Shared.Kernel.Tests
+│  └─ NafasLand.Admin.Modules.Sample.Tests
+├─ backups/                     با .gitkeep، محتوایش در gitignore
+└─ prompts/  AGENTS.md  DECISIONS.md  ROADMAP.md  README.md
 ```
+
+قواعد الزامی:
+
+- هر چیزی بیرون از `Contracts` در یک ماژول `internal` است.
+- `Directory.Build.props` با `Nullable=enable` و `TreatWarningsAsErrors=true`.
+- `Directory.Packages.props` اجباری است؛ نسخهٔ پکیج در فایل `.csproj` نوشته نشود.
+- هر فیچر یک پوشه زیر `Features/` با چهار فایل کنار هم (ADR-006).
 
 ## آنچه باید ساخته شود
 
@@ -133,6 +166,18 @@ public interface IModule
 
 به‌علاوه یک command دوم **بدون** permission تعریف‌شده، صرفاً برای اثبات اینکه `AuthorizationBehavior` آن را رد می‌کند.
 
+### ۹. Docker و Compose (ADR-043)
+
+- `docker/api/Dockerfile` چندمرحله‌ای: build روی image SDK، اجرا روی image سبک runtime، با کاربر غیر root.
+- `compose.yaml` با دو سرویس: `api` و `mssql`.
+  - `mssql`: image رسمی SQL Server، داده در **named volume**، و bind mount پوشهٔ `./backups` برای خروجی پشتیبان‌ها.
+  - هر دو سرویس `healthcheck` داشته باشند؛ `api` با `depends_on` و شرط `service_healthy` بالا بیاید.
+- `compose.override.yaml` برای توسعه: پورت‌ها باز، hot reload.
+- `compose.prod.yaml`: `restart: unless-stopped`، پورت دیتابیس بسته.
+- ساختار compose طوری باشد که افزودن `web` و `proxy` در گام ۴ فقط یک سرویس جدید باشد، نه بازنویسی.
+- همهٔ مقادیر حساس از `.env` خوانده شوند؛ `.env.example` با کلیدها و **بدون هیچ مقدار واقعی** در مخزن بماند.
+- **مهاجرت هنگام بالا آمدن کانتینر اجرا نشود.** دستور اجرای مهاجرت جداگانه در `README.md` مستند شود.
+
 ## معیار پذیرش
 
 این‌ها باید قابل نمایش باشند:
@@ -147,12 +192,18 @@ public interface IModule
 8. با پاک کردن یک مقدار کانفیگ اجباری، برنامه در استارتاپ خطای روشن می‌دهد.
 9. در لاگ‌ها، `CorrelationId` یک درخواست در همهٔ خطوط مربوط به آن دیده می‌شود.
 10. خاموش کردن feature flag ماژول نمونه، اندپوینت‌هایش را حذف می‌کند.
+11. `docker compose up` کل استک را بالا می‌آورد و `GET /health` از روی host سبز است.
+12. `api` پیش از آماده شدن `mssql` بالا نمی‌آید.
+13. با پاک کردن volume، داده می‌رود ولی با اجرای دوبارهٔ مهاجرت، اسکیما بازسازی می‌شود.
+14. `git status` پس از بالا آمدن استک تمیز است — هیچ فایل تولیدشده‌ای وارد مخزن نشده.
+15. تست معماری، رفرنس دادن یک ماژول به بخش غیر `Contracts` ماژول دیگر را **رد** می‌کند (با یک تست که این تخلف را می‌سنجد).
 
 ## آنچه در این مرحله **نباید** انجام شود
 
 - هیچ تماسی با API پرتال، هیچ `IPortalProductClient`.
 - هیچ موجودیت محصول، واریانت، سفارش یا دسته‌بندی.
-- هیچ فرانت‌اندی.
+- هیچ فرانت‌اندی — پوشهٔ `src/Web` فقط با یک `.gitkeep` ساخته شود.
+- هیچ سرویس `web` یا `proxy` در compose؛ فقط جایشان در ساختار مشخص باشد.
 - هیچ مدل کامل کاربر و نقش — آن گام ۱ است. در این مرحله یک کاربر ساختگی با claims ثابت برای تست کافی است.
 - هیچ کتابخانهٔ اضافه‌ای بدون بررسی `DECISIONS.md`.
 

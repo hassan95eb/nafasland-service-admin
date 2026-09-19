@@ -1,0 +1,32 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+
+# محیط و اسرار
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+
+# پشتیبان‌ها
+backups/*
+!backups/.gitkeep
+
+# فرانت
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# ابزارها و ویرایشگرها
+.vs/
+.vscode/
+.idea/
+.DS_Store
+.claude/settings.local.json

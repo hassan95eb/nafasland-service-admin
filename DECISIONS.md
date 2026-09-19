@@ -852,6 +852,69 @@ product.publish          → SuperAdmin (با فلگ IsSuperAdminOnly)
 - لاگ و شمارنده‌ها هرگز شامل توکن، رمز یا کوکی سشن نمی‌شوند (ADR-039).
 - AuditLog جایگزین لاگ فنی نیست و برعکس؛ اولی برای پاسخ‌گویی کاربران است و دومی برای عیب‌یابی سیستم.
 
+### ADR-043 — اجرای پروژه با Docker و Docker Compose
+
+**تاریخ:** ۲۰۲۶-۰۹-۱۹
+**وضعیت:** پذیرفته‌شده (Accepted) — جایگزین وضعیت «پیشنهاد» قبلی
+
+**تصمیم:**
+- کل استک با Docker Compose اجرا می‌شود: `api`، `mssql`، و در گام‌های بعد `web` و `proxy`.
+- سه فایل compose: `compose.yaml` (پایه)، `compose.override.yaml` (توسعه — پورت‌های باز، hot reload) و `compose.prod.yaml` (استقرار — سیاست restart، بدون پورت باز دیتابیس).
+- **SQL Server داخل کانتینر** اجرا می‌شود و داده در یک named volume نگهداری می‌شود. پوشهٔ `backups/` از host به کانتینر mount می‌شود تا پشتیبان‌ها بیرون از volume بیفتند (ADR-040).
+- هر سرویس `healthcheck` دارد و `depends_on` با شرط `service_healthy` استفاده می‌شود؛ بالا آمدن API پیش از آماده شدن دیتابیس، شکست‌های گیج‌کننده می‌سازد.
+- reverse proxy (Caddy) مسیر `/` را به فرانت و `/api` را به بک‌اند می‌دهد تا الزام «یک دامنه» در ADR-013 برقرار شود.
+- Dockerfile بک‌اند چندمرحله‌ای است: build در image کامل SDK، اجرا روی image سبک runtime. کانتینر با کاربر غیر root اجرا می‌شود.
+- مقادیر حساس از فایل `.env` خوانده می‌شوند که در gitignore است؛ `.env.example` با کلیدها و بدون هیچ مقدار واقعی در مخزن می‌ماند (ADR-039).
+- **مهاجرت دیتابیس هنگام بالا آمدن کانتینر اجرا نمی‌شود** (ADR-041)؛ یک دستور جداگانه در فرایند استقرار است.
+
+**نسخهٔ SQL Server در محیط واقعی: Express (رایگان، سقف ۱۰ گیگابایت).**
+
+**ریسک پذیرفته‌شده و نیازمند پایش:** سقف ۱۰ گیگابایت Express با AuditLog که برای هر ویرایش `BeforeJson` و `AfterJson` نگه می‌دارد (ADR-009) و نگهداری ۶ ماهه (ADR-015)، می‌تواند روزی پر شود. بنابراین:
+- حجم پایگاه داده به‌عنوان یک شمارندهٔ پایش‌شده اضافه می‌شود (ADR-042) و هشدار در آستانهٔ ۸ گیگابایت.
+- اگر رشد سریع‌تر از انتظار بود، اول دورهٔ نگهداری کوتاه می‌شود یا بایگانی زودتر انجام می‌شود، و در نهایت نسخهٔ لایسنس‌دار سنجیده می‌شود.
+- در طراحی جداول از ذخیرهٔ تکراری محتوای سنگین پرهیز می‌شود؛ `BeforeJson` و `AfterJson` فقط فیلدهای تغییرکرده را نگه دارند، نه کل سند، مگر جایی که لازم است.
+
+### ADR-044 — ساختار مخزن و قراردادهای نام‌گذاری
+
+**تاریخ:** ۲۰۲۶-۰۹-۱۹
+**وضعیت:** پذیرفته‌شده (Accepted)
+
+**زمینه:** ADR-004 مرز ماژول‌ها را تعیین کرد ولی نام پروژه‌ها، ساختار داخلی ماژول و فایل‌های پایهٔ سولوشن باز مانده بود. اگر این‌ها تعیین نشوند، هر مرحله با نام‌گذاری متفاوتی ساخته می‌شود.
+
+**تصمیم — نام‌گذاری:** پیشوند همهٔ پروژه‌ها `NafasLand.Admin` است:
+`NafasLand.Admin.Api`، `NafasLand.Admin.Shared.Kernel`، `NafasLand.Admin.Shared.Infrastructure`، `NafasLand.Admin.Modules.<نام ماژول>`، و تست‌ها با پسوند `.Tests`.
+
+**تصمیم — ساختار:**
+
+```
+.
+├─ NafasLand.Admin.sln
+├─ Directory.Build.props        nullable فعال، warnings-as-errors، نسخهٔ زبان
+├─ Directory.Packages.props     مدیریت متمرکز نسخهٔ پکیج‌ها
+├─ .editorconfig  .gitignore  .dockerignore  .env.example
+├─ compose.yaml  compose.override.yaml  compose.prod.yaml
+├─ docker/{api,web,proxy,mssql}/
+├─ src/
+│  ├─ Api/
+│  ├─ Shared/{Kernel,Infrastructure}/
+│  ├─ Modules/<نام>/
+│  │  ├─ Contracts/          تنها بخش public ماژول
+│  │  ├─ Features/<فیچر>/    Command، Handler، Validator، Endpoint در یک پوشه
+│  │  ├─ Persistence/        DbContext، Configurations، Migrations
+│  │  ├─ <نام>Permissions.cs
+│  │  └─ <نام>Module.cs
+│  └─ Web/                   فرانت Next.js
+├─ tests/
+├─ backups/                  در gitignore
+└─ prompts/  AGENTS.md  DECISIONS.md  ROADMAP.md  README.md
+```
+
+**قواعد:**
+- هر چیزی بیرون از `Contracts` در یک ماژول `internal` است.
+- یک پروژهٔ **`NafasLand.Admin.Architecture.Tests`** وجود دارد که مرزها را تست می‌کند: هیچ ماژولی به غیر از `Contracts` ماژول دیگر رفرنس ندهد، و هیچ ماژولی به ماژول دیگر رفرنس پروژه‌ای نداشته باشد. این قاعده را از «توافق» به «چیزی که بیلد را می‌شکند» تبدیل می‌کند.
+- `Directory.Packages.props` اجباری است تا نسخهٔ یک پکیج بین پروژه‌ها واگرا نشود.
+- `Directory.Build.props` با nullable فعال و warnings-as-errors؛ هشدار خاموش‌شده بدهکاری فنی خاموش است.
+
 ## پیشنهادهای اجرایی — هنوز تصمیم قطعی نیستند
 
 - TypeScript و App Router برای فرانت‌اند — تصمیم شد؛ نک. ADR-013.
@@ -859,13 +922,14 @@ product.publish          → SuperAdmin (با فلگ IsSuperAdminOnly)
 - ارائهٔ فرانت و مسیر /api از یک دامنه با reverse proxy؛ درخواست‌های /api به ASP.NET Core هدایت شوند — تصمیم شد؛ نک. ADR-013.
 - ورود مبتنی بر کوکی امن HttpOnly همراه با محافظت CSRF، با طراحی جزئیات در مرحلهٔ احراز هویت — تصمیم شد؛ نک. ADR-013.
 - ~~PostgreSQL برای کاربران، مجوزها و سوابق عملیات~~ — جایگزین شد با SQL Server؛ نک. ADR-019.
-- Docker Compose برای استقرار قابل تکرار. (هنوز تصمیم قطعی نیست؛ با استقرار لوکال ADR-018 و SQL Server ADR-019 دوباره سنجیده شود.)
+- ~~Docker Compose برای استقرار قابل تکرار~~ — تصمیم شد؛ نک. ADR-043.
 
 ## موارد باز
 
 - ~~انتخاب محل استقرار: سیستم داخل شرکت یا VPS~~ — بسته شد با ADR-018: ابتدا لوکال شرکت.
 - ~~انتخاب اجرای Next.js با Node.js یا خروجی static~~ — بسته شد: Node runtime (نک. ADR-011 و ADR-013).
 - تعیین نسخه‌های دقیق و سازگار وابستگی‌ها هنگام راه‌اندازی پروژه و ثبت lockfile.
+- پایش حجم پایگاه داده در برابر سقف ۱۰ گیگابایتی SQL Server Express و بازنگری دورهٔ نگهداری لاگ در صورت لزوم (ADR-043).
 - آزمایش پشتیبانی `page`/`size`/`keywords`/`sorting` روی `GET /manage/store/products` (وجود `total` و `count: 25` نشان می‌دهد صفحه‌بندی هست، ولی نام پارامترها تأیید نشده).
 - پرسیدن از ارائه‌دهندهٔ پرتال: آیا اندپوینت مستقل ایجاد و حذف واریانت وجود دارد؟ (ADR-032)
 - نمونه‌برداری از ۱۵ تا ۲۰ توضیحات محصول واقعی برای استخراج فهرست تگ‌ها و ویژگی‌های به‌کاررفته، پیش از تثبیت افزونه‌های TipTap (ADR-033).
