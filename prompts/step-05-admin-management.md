@@ -47,7 +47,7 @@
 
 یک صفحهٔ «مدیریت ادمین‌ها» در فرانت‌اند که رویش دستی بشود: ادمین تازه ساخت، فعال/غیرفعال کرد، رمزش را ریست کرد، نقش‌هایش را عوض کرد و permissionهای مستقیمش را Grant/Deny کرد. به‌علاوه جایگزینی بنر «رمز باید تغییر کند» گام ۴ با یک صفحهٔ واقعی تغییر رمز اجباری. همهٔ این‌ها روی endpointهایی سوار می‌شود که همین حالا در ماژول `Identity` وجود دارند (جدول پایین)؛ فقط یک نقص کوچک در بک‌اند باید پر شود (بخش «تغییر لازم در بک‌اند»).
 
-**این مرحله بخشی از یک تصمیم قدیمی‌تر را هم می‌بندد:** ADR-046 از قبل جلوی گرفتن نقش SuperAdmin توسط یک Admin عادی را گرفته؛ این مرحله فقط UI‌اش را روی این رفتار می‌سازد و تستش می‌کند — منطق امنیتی‌اش را دوباره پیاده نمی‌کند.
+**این مرحله بخشی از یک تصمیم قدیمی‌تر را هم می‌بندد:** ADR-046 از قبل جلوی گرفتن نقش SuperAdmin توسط یک Admin عادی را گرفته؛ این مرحله فقط UI‌اش را روی این رفتار می‌سازد و تستش می‌کند — منطق امنیتی‌اش را دوباره پیاده نمی‌کند. یک تناقض permission هم حین نوشتن همین پرامپت پیدا و با **ADR-052** بسته شد (فرم تغییر نقش‌ها به فهرست نقش‌ها نیاز دارد ولی فقط `identity.users.manage` دارد، نه `identity.access.manage` که `GET /roles` پشتش است) — جزئیاتش در بخش «تغییر لازم در بک‌اند» و ردیف `GET /roles/summary` در جدول پایین آمده.
 
 ## آنچه از قبل آماده است (فقط رجوع کن، دوباره نساز)
 
@@ -63,7 +63,8 @@
 | `POST /users/{id}/toggle-active` | — | `{ isActive }` | `identity.users.manage` |
 | `PUT /users/{id}/permissions/{permissionKey}` | `{ effect: "Grant"\|"Deny"\|null }` (`null` یعنی حذف override) | — | `identity.access.manage` |
 | `GET /permissions` | — | آرایه: `{ key, moduleName, isSuperAdminOnly }` — **بعد از تغییر بک‌اند این مرحله، `displayName` هم اضافه می‌شود** | `identity.access.manage` |
-| `GET /roles` | — | آرایه: `{ id, name, isSystemManaged, permissionKeys: string[] }` | `identity.access.manage` |
+| `GET /roles` | — | آرایه: `{ id, name, isSystemManaged, permissionKeys: string[] }` — شامل نقشهٔ کامل permissionهای هر نقش، عمداً پشت `identity.access.manage` (ADR-052) | `identity.access.manage` |
+| `GET /roles/summary` | — | آرایه: `{ id, name, isSystemManaged }`، **بدون `permissionKeys`** — این مرحله می‌سازدش (ADR-052) | `identity.users.manage` |
 | `PUT /roles/{roleId}/permissions` | `{ permissionKeys: string[] }` (جایگزینی کامل) | — | `identity.access.manage` |
 | `POST /auth/change-password` | `{ currentPassword, newPassword }` | — | هر کاربر واردشده، حتی وقتی `mustChangePassword=true` |
 
@@ -75,8 +76,9 @@
 
 ## تغییر لازم در بک‌اند (استثنای دقیق قاعدهٔ ۸)
 
-فقط همین یک مورد مجاز است، هیچ‌چیز دیگری:
+فقط همین دو مورد مجاز است، هیچ‌چیز دیگری:
 
+**۱. `DisplayName` روی Permission (بدون ADR جدا، امتداد گام ۱).**
 `Permission` هیچ `DisplayName` ذخیره نمی‌کند (فقط `Key`، `ModuleName`، `IsSuperAdminOnly`)، در حالی که `PermissionDefinition` (در `Shared/Kernel/Permissions/PermissionDefinition.cs`، مصرف‌شده در `IdentityModule.cs`/`CatalogModule.cs`/`AuditingModule.cs`/`SampleModule.cs`) از قبل یک `DisplayName` فارسی برای هر permission دارد (مثلاً «مدیریت کاربران»، «مدیریت دسترسی‌ها»). این همان موردی است که `DECISIONS.md` زیر عنوان «موارد باز» ثبت کرده. بدون این، صفحهٔ ویرایش permissionها فقط کلیدهای انگلیسی خام (`identity.users.manage`) را می‌تواند نشان بدهد.
 
 اضافه کن:
@@ -84,6 +86,12 @@
 - `Permission.Create(key, displayName, moduleName, isSuperAdminOnly)` و `Permission.SyncFrom(displayName, moduleName, isSuperAdminOnly)` را به‌روزرسانی کن تا `DisplayName` را هم بگیرند.
 - `IdentityBootstrapper.SynchronizePermissionsAsync` را طوری عوض کن که `definition.DisplayName` را هم پاس بدهد (همان `ModulePermissionDefinition.Definition.DisplayName` که همین حالا در دسترس است).
 - `ListPermissionsEndpoint` را طوری عوض کن که `DisplayName` را هم در پاسخ برگرداند.
+
+**۲. `GET /roles/summary` تازه، زیر `identity.users.manage` (ADR-052).**
+فرم «تغییر نقش‌های کاربر» فقط `identity.users.manage` دارد ولی برای رندرشدنش به فهرست نقش‌ها (id/name/isSystemManaged) نیاز دارد؛ `GET /roles` موجود پشت `identity.access.manage` است چون `permissionKeys` هر نقش را هم برمی‌گرداند — این را شل نکن (به‌طور کامل در ADR-052 توضیح داده شده، بخوانش). به‌جایش:
+- یک Query تازه بساز، `GET /api/v1/identity/roles/summary`، زیر permission `identity.users.manage`، که فقط `{ id, name, isSystemManaged }` را از جدول `Role` برمی‌گرداند — بدون `permissionKeys`، بدون join به `RolePermission`.
+- هیچ مهاجرتی لازم ندارد؛ `Role` از قبل همهٔ این فیلدها را دارد.
+- `GET /roles` کامل دست‌نخورده می‌ماند و فقط برای صفحهٔ ویرایش permissionهای نقش (پایین‌تر، بخش «مدیریت نقش‌ها») مصرف می‌شود.
 
 هیچ تغییر دیگری در ماژول Identity یا هر ماژول دیگر مجاز نیست بدون توقف و پرسیدن.
 
@@ -115,7 +123,7 @@
 2. **فرم ساخت ادمین**: `username` + رمز تولیدشده (بالا توضیح داده شد) + نمایش رمز بعد از موفقیت. بعد از ساخت، لیست را invalidate کن (`queryClient.invalidateQueries`) — این اولین mutation واقعی این فرانت‌اند است؛ الگوی query key factory که `productQueryKeys` دارد را برای `adminQueryKeys` هم رعایت کن.
 3. **دکمهٔ فعال/غیرفعال** روی هر ردیف (`POST /users/{id}/toggle-active`)؛ برای کاربر `isProtected` غیرفعال (disabled) باشد با یک tooltip/توضیح کوتاه، نه اینکه کاربر با کلیک به یک خطای ۴۰۳ برسد بدون توضیح.
 4. **دکمهٔ ریست رمز**: مثل ساخت ادمین، یک رمز تصادفی تولید کن، `POST /users/{id}/reset-password` بزن، رمز را یک‌بار نشان بده.
-5. **ویرایش نقش‌ها**: چک‌باکس یا select چندانتخابی از `GET /roles`؛ ذخیره با `PUT /users/{id}/roles` (جایگزینی کامل). اگر کاربر واردشده `identity.access.manage` ندارد، گزینهٔ نقش `SuperAdmin` باید غیرفعال/غیرقابل‌انتخاب باشد (بالا توضیح داده شد).
+5. **ویرایش نقش‌ها**: چک‌باکس یا select چندانتخابی از `GET /roles/summary` (نه `GET /roles` کامل — همان دلیلی که در ADR-052 و بخش «تغییر لازم در بک‌اند» آمده: این فرم فقط `identity.users.manage` دارد و نباید `permissionKeys` نقش‌ها را ببیند)؛ ذخیره با `PUT /users/{id}/roles` (جایگزینی کامل). اگر کاربر واردشده `identity.access.manage` ندارد، گزینهٔ نقش `SuperAdmin` (از روی `isSystemManaged` در همان پاسخ) باید غیرفعال/غیرقابل‌انتخاب باشد (بالا توضیح داده شد).
 6. **ویرایش permissionهای مستقیم کاربر** (`GET /users/{id}` برای `directPermissions` فعلی + `GET /permissions` برای فهرست کامل): برای هر permission سه حالت — بدون override، Grant، Deny — و ذخیره با `PUT /users/{id}/permissions/{key}` (مقدار `null` برای «بدون override»). permissionهای `isSuperAdminOnly=true` را برای کاربر غیر-SuperAdmin غیرفعال نشان بده.
 7. **صفحهٔ جزئیات یک کاربر** (`GET /users/{id}`) می‌تواند بخش‌های ۵ و ۶ را در خودش جای بدهد؛ نیازی نیست همه‌چیز در همان جدول فهرست باشد — یک ردیف قابل‌کلیک به `app/(panel)/admins/[id]/page.tsx` منطقی‌تر است، ولی اگر implementer طرح ساده‌تری (مثلاً پنل کناری) ترجیح می‌دهد و همان قابلیت‌ها را می‌پوشاند، اشکالی ندارد — تصمیمش را در گزارش پایانی بگو.
 
@@ -201,4 +209,4 @@ src/Web/
 - کد در همین مخزن، روی برنچ `step-05-admin-management`.
 - یک یا چند کامیت Conventional Commits که بدنه‌شان دلیل تصمیم‌های پیاده‌سازی (نه فهرست فایل) را بگوید.
 - بخش مربوط به مدیریت ادمین‌ها در `README.md` اضافه شود: مسیرهای جدید، و اینکه رمز موقت چگونه تولید و نمایش داده می‌شود.
-- اگر جایی از این پرامپت یا از ADRهای مرتبط (۰۰۱، ۰۰۲، ۰۰۳، ۰۲۱، ۰۲۲، ۰۲۳، ۰۴۶) با هم یا با کد موجود گام‌های ۱ و ۴ نمی‌خواند، **حدس نزن** — فهرست کن و بپرس.
+- اگر جایی از این پرامپت یا از ADRهای مرتبط (۰۰۱، ۰۰۲، ۰۰۳، ۰۲۱، ۰۲۲، ۰۲۳، ۰۴۶، ۰۵۲) با هم یا با کد موجود گام‌های ۱ و ۴ نمی‌خواند، **حدس نزن** — فهرست کن و بپرس.

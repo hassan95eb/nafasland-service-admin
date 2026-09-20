@@ -220,13 +220,29 @@ curl -i -X POST http://localhost:8080/api/v1/identity/auth/login \
 | `GET /permissions`, `GET /roles` | `identity.access.manage` |
 | `PUT /roles/{roleId}/permissions` | `identity.access.manage`؛ ۴۰۹ روی نقش `IsSystemManaged` (یعنی SuperAdmin) |
 
+## مدیریت ادمین‌ها (گام ۵)
+
+مسیر `/admins` برای دارندهٔ `identity.users.manage` فهرست ادمین‌ها، ساخت حساب،
+فعال/غیرفعال‌سازی، ریست رمز و ویرایش نقش‌ها را فراهم می‌کند. جزئیات هر حساب در
+`/admins/{id}` است؛ Grant/Deny مستقیم permission و مدیریت permissionهای نقش‌ها
+فقط برای دارندهٔ `identity.access.manage` نمایش داده می‌شود. فهرست سبک نقش‌ها
+برای فرم تغییر نقش از `GET /api/v1/identity/roles/summary` می‌آید و نقشهٔ کامل
+permissionهای نقش‌ها را افشا نمی‌کند (ADR-052).
+
+برای ساخت حساب و ریست رمز، فرانت با `crypto.getRandomValues` یک رمز موقت ۱۶
+نویسه‌ای شامل حروف کوچک، حروف بزرگ و عدد می‌سازد. این مقدار فقط در state همان
+صفحه نگهداری و پس از پاسخ موفق فقط یک‌بار همراه دکمهٔ کپی نمایش داده می‌شود؛ در
+URL، storage یا cache کوئری ذخیره نمی‌شود. کاربر در اولین ورود فقط فرم
+`/change-password` را می‌بیند و تا تغییر موفق رمز، سایدبار و سایر صفحات پنل
+برای او رندر نمی‌شوند.
+
 ## گزارش فعالیت (ماژول Auditing، گام ۲)
 
 `AuditBehavior` (جایگاهش از گام ۰ رزرو شده بود) و یک تغییر کوچک در
 `AuthorizationBehavior` حالا واقعاً به جدول `AuditLog` می‌نویسند — فقط برای
-commandهایی که `IAuditableCommand` را پیاده کرده‌اند (فعلاً همین ماژول
-Identity's `ExportAuditLogCommand` و، صرفاً برای اثبات مکانیزم،
-`PingCommand` در ماژول Sample؛ نه command دیگری در Identity). سه Outcome:
+commandهایی که `IAuditableCommand` را پیاده کرده‌اند (عملیات مدیریت کاربر و
+دسترسی در Identity، `ExportAuditLogCommand` در Auditing و، صرفاً برای اثبات
+مکانیزم، `PingCommand` در ماژول Sample). سه Outcome:
 `Success` (بعد از اجرای موفق handler)، `Failed` (خطای handler/تراکنش، پیام
 خطا بدون stack trace)، `Denied` (رد به‌خاطر نبود permission یا نبود مارکر
 دسترسی — نوشته‌شده توسط خودِ `AuthorizationBehavior`، چون `AuditBehavior`

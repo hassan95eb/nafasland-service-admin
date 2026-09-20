@@ -16,20 +16,26 @@ internal static class ListUsersEndpoint
                 var users = await dbContext.Users
                     .AsNoTracking()
                     .OrderBy(user => user.Username)
-                    .Select(user => new
-                    {
+                    .Select(user => new UserListItemResponse(
                         user.Id,
                         user.Username,
                         user.IsActive,
                         user.IsProtected,
                         user.MustChangePassword,
-                        Roles = user.UserRoles.Select(userRole => userRole.Role!.Name),
-                    })
+                        user.UserRoles.Select(userRole => userRole.Role!.Name).ToArray()))
                     .ToListAsync(cancellationToken);
 
-                return Results.Ok(users);
+                return TypedResults.Ok(users);
             })
             .RequireAuthorization()
             .RequirePermission(IdentityPermissions.UsersManage);
     }
 }
+
+internal sealed record UserListItemResponse(
+    Guid Id,
+    string Username,
+    bool IsActive,
+    bool IsProtected,
+    bool MustChangePassword,
+    IReadOnlyCollection<string> Roles);

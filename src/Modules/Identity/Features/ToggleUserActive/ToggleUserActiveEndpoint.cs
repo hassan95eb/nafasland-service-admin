@@ -17,7 +17,7 @@ internal static class ToggleUserActiveEndpoint
                 var result = await dispatcher.SendAsync<ToggleUserActiveCommand, ToggleUserActiveResult>(
                     new ToggleUserActiveCommand(id),
                     cancellationToken);
-                return Results.Ok(result);
+                return TypedResults.Ok(result);
             })
             .RequireAuthorization();
     }
