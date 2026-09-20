@@ -27,6 +27,8 @@ services:
       - sample-bin:/src/src/Modules/Sample/bin
       - identity-obj:/src/src/Modules/Identity/obj
       - identity-bin:/src/src/Modules/Identity/bin
+      - auditing-obj:/src/src/Modules/Auditing/obj
+      - auditing-bin:/src/src/Modules/Auditing/bin
 
 volumes:
   api-obj:
@@ -39,3 +41,5 @@ volumes:
   sample-bin:
   identity-obj:
   identity-bin:
+  auditing-obj:
+  auditing-bin:

@@ -32,6 +32,8 @@
       surface is meant to be used from outside the module.
     -->
     <ProjectReference Include="..\Modules\Identity\NafasLand.Admin.Modules.Identity.csproj" />
+    <!-- Only for assembly discovery (ADR-005); Api never references Auditing's types directly. -->
+    <ProjectReference Include="..\Modules\Auditing\NafasLand.Admin.Modules.Auditing.csproj" />
   </ItemGroup>
 
 </Project>

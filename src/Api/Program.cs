@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using NafasLand.Admin.Api.Authentication;
 using NafasLand.Admin.Api.Configuration;
 using NafasLand.Admin.Api.HealthChecks;
+using NafasLand.Admin.Modules.Auditing.Contracts;
 using NafasLand.Admin.Modules.Identity.Contracts;
 using NafasLand.Admin.Shared.Infrastructure.Configuration;
 using NafasLand.Admin.Shared.Infrastructure.Extensions;
@@ -200,6 +201,14 @@ await using (var scope = app.Services.CreateAsyncScope())
 
         await bootstrapper.BootstrapAsync(allPermissions, CancellationToken.None);
     }
+}
+
+// ---------- Auditing bootstrap: schedule the 6-month purge recurring job (ADR-015) ----------
+// Not done inside AuditingModule.RegisterServices — see IAuditingBootstrapper's
+// own comment for why a static Hangfire call there breaks `dotnet ef` tooling.
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    scope.ServiceProvider.GetService<IAuditingBootstrapper>()?.ScheduleRecurringJobs();
 }
 
 app.UseExceptionHandler();

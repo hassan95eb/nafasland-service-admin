@@ -44,6 +44,13 @@ internal sealed class EffectivePermissionsClaimsTransformation(IEffectivePermiss
 
         identity.AddClaim(new Claim(AccountClaimTypes.MustChangePassword, access.MustChangePassword ? "true" : "false"));
 
+        // Display-only (AuditLog.ActorRoleAtTime, ADR-009/step 2); never used for
+        // an authorization check — that is always permission-based (ADR-001).
+        foreach (var roleName in access.RoleNames)
+        {
+            identity.AddClaim(new Claim(ClaimTypes.Role, roleName));
+        }
+
         return principal;
     }
 }
