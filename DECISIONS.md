@@ -995,6 +995,19 @@ product.publish          → SuperAdmin (با فلگ IsSuperAdminOnly)
 
 **علامت‌گذاری برای آینده:** اگر پروژه به سمت عملیات مالی حساس‌تر پیش رفت (مثلاً تغییر قیمت واقعی محصول در فازهای بعدی)، این تصمیم باید بازبینی شود.
 
+### ADR-050 — کتابخانهٔ resilience برای IPortalProductClient: Microsoft.Extensions.Http.Resilience
+
+**تاریخ:** ۲۰۲۶-۰۹-۱۹
+**وضعیت:** پذیرفته‌شده (Accepted)
+
+**زمینه:** ADR-008 مقرر کرده بود `IPortalProductClient` با «typed HttpClient + Polly» پیاده شود، ولی استفادهٔ خام از Polly یا بستهٔ قدیمی `Microsoft.Extensions.Http.Polly` دیگر روش توصیه‌شدهٔ مایکروسافت برای ترکیب با `HttpClientFactory` در .NET ۸ به بعد نیست.
+
+**تصمیم:** پکیج `Microsoft.Extensions.Http.Resilience` (بر پایهٔ Polly v8) برای پیاده‌سازی همان تصمیم ADR-008 استفاده می‌شود؛ محدودکنندهٔ نرخ (ADR-026) هم از طریق استراتژی Rate Limiter همین بسته یا `System.Threading.RateLimiting` (بخشی از خود runtime، نه وابستگی جدا) پیاده می‌شود.
+
+**دلیل:** بستهٔ قدیمی `Microsoft.Extensions.Http.Polly` دیگر به‌روزرسانی فعال ندارد؛ بستهٔ جدید retry (با پشتیبانی درونی از هدر `Retry-After`)، circuit breaker، timeout و rate limiter را یکجا و سازگار با `HttpClientFactory` می‌دهد.
+
+**پیامد:** این تنها وابستگی جدید گام ۳ است؛ از پیش تأیید شده، نیازی به پرسیدن دوباره نیست.
+
 ## پیشنهادهای اجرایی — هنوز تصمیم قطعی نیستند
 
 - TypeScript و App Router برای فرانت‌اند — تصمیم شد؛ نک. ADR-013.
