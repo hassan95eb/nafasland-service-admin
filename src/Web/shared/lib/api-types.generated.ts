@@ -173,7 +173,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["UserListItemResponse"][];
+                    };
                 };
             };
         };
@@ -196,7 +198,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["CreateUserResult"];
+                    };
                 };
             };
         };
@@ -349,7 +353,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["ToggleUserActiveResult"];
+                    };
                 };
             };
         };
@@ -417,6 +423,15 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
+                    content: {
+                        "application/json": components["schemas"]["UserDetailsResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
                     content?: never;
                 };
             };
@@ -450,7 +465,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["PermissionResponse"][];
+                    };
                 };
             };
         };
@@ -483,7 +500,44 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["RoleResponse"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/identity/roles/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RoleSummaryResponse"][];
+                    };
                 };
             };
         };
@@ -924,6 +978,15 @@ export interface components {
             username: string;
             initialPassword: string;
         };
+        CreateUserResult: {
+            /** Format: uuid */
+            id: string;
+            username: string;
+        };
+        DirectPermissionResponse: {
+            key: string;
+            effect: string;
+        };
         ExportAuditLogRequest: {
             /** Format: uuid */
             actorUserId: null | string;
@@ -967,6 +1030,12 @@ export interface components {
             roles: string[];
             permissions: string[];
         };
+        PermissionResponse: {
+            key: string;
+            displayName: string;
+            moduleName: string;
+            isSuperAdminOnly: boolean;
+        };
         PingRequest: {
             message: string;
         };
@@ -997,6 +1066,19 @@ export interface components {
         ResetPasswordRequest: {
             newPassword: string;
         };
+        RoleResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            isSystemManaged: boolean;
+            permissionKeys: string[];
+        };
+        RoleSummaryResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            isSystemManaged: boolean;
+        };
         SetRolePermissionsRequest: {
             permissionKeys: string[];
         };
@@ -1005,6 +1087,30 @@ export interface components {
         };
         SetUserRolesRequest: {
             roleIds: string[];
+        };
+        ToggleUserActiveResult: {
+            isActive: boolean;
+        };
+        UserDetailsResponse: {
+            /** Format: uuid */
+            id: string;
+            username: string;
+            isActive: boolean;
+            isProtected: boolean;
+            mustChangePassword: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            roles: string[];
+            directPermissions: components["schemas"]["DirectPermissionResponse"][];
+        };
+        UserListItemResponse: {
+            /** Format: uuid */
+            id: string;
+            username: string;
+            isActive: boolean;
+            isProtected: boolean;
+            mustChangePassword: boolean;
+            roles: string[];
         };
     };
     responses: never;

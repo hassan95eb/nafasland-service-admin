@@ -43,11 +43,15 @@ internal sealed class IdentityBootstrapper(
         {
             if (existingByKey.TryGetValue(definition.Key, out var existing))
             {
-                existing.SyncFrom(moduleName, definition.IsSuperAdminOnly);
+                existing.SyncFrom(definition.DisplayName, moduleName, definition.IsSuperAdminOnly);
                 continue;
             }
 
-            dbContext.Permissions.Add(Permission.Create(definition.Key, moduleName, definition.IsSuperAdminOnly));
+            dbContext.Permissions.Add(Permission.Create(
+                definition.Key,
+                definition.DisplayName,
+                moduleName,
+                definition.IsSuperAdminOnly));
         }
     }
 

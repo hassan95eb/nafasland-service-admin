@@ -34,7 +34,7 @@ export function LoginForm() {
     try {
       const result = await login(parsed.data);
       storeAntiforgeryToken(result.antiforgeryToken);
-      router.replace("/products");
+      router.replace(result.mustChangePassword ? "/change-password" : "/products");
       router.refresh();
     } catch (requestError) {
       setError(presentApiError(requestError));

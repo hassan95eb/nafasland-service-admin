@@ -86,6 +86,11 @@ namespace NafasLand.Admin.Modules.Identity.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
                     b.Property<bool>("IsSuperAdminOnly")
                         .HasColumnType("bit");
 

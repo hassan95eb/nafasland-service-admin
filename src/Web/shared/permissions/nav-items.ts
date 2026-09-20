@@ -4,6 +4,11 @@ export const navItems = [
     label: "محصولات",
     permission: "catalog.products.read",
   },
+  {
+    href: "/admins",
+    label: "مدیریت ادمین‌ها",
+    permission: "identity.users.manage",
+  },
 ] as const;
 
 export function filterNavItems(permissions: readonly string[]) {

@@ -101,6 +101,7 @@ internal sealed class IdentityModule : IModule
         GetUserEndpoint.Map(app);
         ListPermissionsEndpoint.Map(app);
         ListRolesEndpoint.Map(app);
+        ListRoleSummariesEndpoint.Map(app);
     }
 
     public IReadOnlyList<PermissionDefinition> Permissions { get; } =

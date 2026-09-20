@@ -13,6 +13,7 @@ internal sealed class PermissionConfiguration : IEntityTypeConfiguration<Permiss
         builder.Property(permission => permission.Key).HasMaxLength(150).IsRequired();
         builder.HasIndex(permission => permission.Key).IsUnique();
 
+        builder.Property(permission => permission.DisplayName).HasMaxLength(150).IsRequired();
         builder.Property(permission => permission.ModuleName).HasMaxLength(100).IsRequired();
     }
 }

@@ -16,7 +16,7 @@ internal static class CreateUserEndpoint
             {
                 var command = new CreateUserCommand(request.Username, request.InitialPassword);
                 var result = await dispatcher.SendAsync<CreateUserCommand, CreateUserResult>(command, cancellationToken);
-                return Results.Ok(result);
+                return TypedResults.Ok(result);
             })
             .RequireAuthorization();
     }

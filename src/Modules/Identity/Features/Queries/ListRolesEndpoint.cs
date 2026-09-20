@@ -16,18 +16,22 @@ internal static class ListRolesEndpoint
                 var roles = await dbContext.Roles
                     .AsNoTracking()
                     .OrderBy(role => role.Name)
-                    .Select(role => new
-                    {
+                    .Select(role => new RoleResponse(
                         role.Id,
                         role.Name,
                         role.IsSystemManaged,
-                        PermissionKeys = role.RolePermissions.Select(rolePermission => rolePermission.Permission!.Key),
-                    })
+                        role.RolePermissions.Select(rolePermission => rolePermission.Permission!.Key).ToArray()))
                     .ToListAsync(cancellationToken);
 
-                return Results.Ok(roles);
+                return TypedResults.Ok(roles);
             })
             .RequireAuthorization()
             .RequirePermission(IdentityPermissions.AccessManage);
     }
 }
+
+internal sealed record RoleResponse(
+    Guid Id,
+    string Name,
+    bool IsSystemManaged,
+    IReadOnlyCollection<string> PermissionKeys);

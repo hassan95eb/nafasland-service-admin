@@ -1024,6 +1024,21 @@ product.publish          → SuperAdmin (با فلگ IsSuperAdminOnly)
 
 **پیامد:** این وابستگی گام ۴ (`Microsoft.AspNetCore.OpenApi` در بک‌اند، `openapi-typescript` در فرانت‌اند) از پیش تأیید شده؛ نیازی به پرسیدن دوباره نیست.
 
+### ADR-052 — یک endpoint سبک جداگانه برای فهرست نقش‌ها بدون افشای permissionKeys، به‌جای شل‌کردن identity.access.manage
+
+**تاریخ:** ۲۰۲۶-۰۹-۲۰
+**وضعیت:** پذیرفته‌شده (Accepted)
+
+**زمینه:** در حین نوشتن پرامپت گام ۵ (مدیریت ادمین‌ها)، یک تناقض واقعی پیدا شد: فرم «تغییر نقش‌های یک کاربر» فقط به `identity.users.manage` نیاز دارد (طبق ADR-001/گام ۱، `PUT /users/{id}/roles` پشت همین permission است)، ولی برای ساختن همان فرم باید فهرست نقش‌ها (id/name، از جمله اینکه کدام‌یک SuperAdmin است تا در UI غیرفعال شود) را از `GET /roles` گرفت — و `GET /roles` پشت `identity.access.manage` است، نه `identity.users.manage`. یعنی یک Admin با فقط `identity.users.manage` می‌تواند نقش‌های یک کاربر را عوض کند ولی نمی‌تواند فهرست نقش‌ها را ببیند تا اصلاً فرمش رندر شود — یک بن‌بست واقعی در UI.
+
+راه سرراست — تغییر دسترسی `GET /roles` به `identity.users.manage` — رد شد، چون `GET /roles` علاوه بر `id`/`name`/`isSystemManaged`، `permissionKeys` هر نقش را هم برمی‌گرداند: یعنی نقشهٔ کامل اینکه هر نقش دقیقاً چه permissionهایی دارد، از جمله نقش SuperAdmin که همهٔ permissionهای سیستم را دارد. این همان چیزی است که `identity.access.manage` طبق ADR-001/۰۰۲ و گام ۱ عمداً محدودش کرده — نه فقط ویرایش، بلکه دیدنِ نقشهٔ کامل دسترسی‌ها. شل‌کردن این endpoint یعنی هر Admin با صرفاً `identity.users.manage` می‌تواند کل نقشهٔ permissionهای سیستم (فعلی و هر چیزی که ماژول‌های بعدی اضافه کنند) را ببیند، بدون اینکه واقعاً به آن نیاز داشته باشد.
+
+**تصمیم:** یک endpoint تازه و سبک، `GET /api/v1/identity/roles/summary`، زیر `identity.users.manage` اضافه می‌شود که فقط `{ id, name, isSystemManaged }` هر نقش را برمی‌گرداند — بدون `permissionKeys`. فرم تغییر نقش‌های کاربر (گام ۵) از همین می‌خواند. `GET /roles` کامل (با `permissionKeys`) بدون تغییر پشت `identity.access.manage` می‌ماند و فقط برای صفحهٔ ویرایش permissionهای هر نقش (`PUT /roles/{roleId}/permissions`) مصرف می‌شود.
+
+**دلیل:** همان الگوی ADR-046: به‌جای شل‌کردن یک permission موجود برای رفع یک نیاز جزئی، یک راه محدود و دقیق برای همان نیاز خاص اضافه شد. اینجا هم به‌جای اینکه `identity.access.manage` معنایش را از دست بدهد (یا `identity.users.manage` بیش از حد لازم قدرت بگیرد)، سطح داده‌ای که واقعاً لازم است از سطحی که فقط برای مدیریت دسترسی لازم است جدا شد.
+
+**پیامد:** یک Query تازه (مثلاً `ListRoleSummariesEndpoint`) در `Modules/Identity/Features/Queries`، بدون مهاجرت جدید (دادهٔ لازم از همان جدول `Role` است، چیزی به schema اضافه نمی‌شود). گام ۵ این endpoint را می‌سازد؛ پرامپتش به‌روزرسانی شد.
+
 ## پیشنهادهای اجرایی — هنوز تصمیم قطعی نیستند
 
 - TypeScript و App Router برای فرانت‌اند — تصمیم شد؛ نک. ADR-013.

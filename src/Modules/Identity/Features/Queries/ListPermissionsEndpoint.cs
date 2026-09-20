@@ -16,17 +16,22 @@ internal static class ListPermissionsEndpoint
                 var permissions = await dbContext.Permissions
                     .AsNoTracking()
                     .OrderBy(permission => permission.ModuleName).ThenBy(permission => permission.Key)
-                    .Select(permission => new
-                    {
+                    .Select(permission => new PermissionResponse(
                         permission.Key,
+                        permission.DisplayName,
                         permission.ModuleName,
-                        permission.IsSuperAdminOnly,
-                    })
+                        permission.IsSuperAdminOnly))
                     .ToListAsync(cancellationToken);
 
-                return Results.Ok(permissions);
+                return TypedResults.Ok(permissions);
             })
             .RequireAuthorization()
             .RequirePermission(IdentityPermissions.AccessManage);
     }
 }
+
+internal sealed record PermissionResponse(
+    string Key,
+    string DisplayName,
+    string ModuleName,
+    bool IsSuperAdminOnly);
