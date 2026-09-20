@@ -17,7 +17,7 @@ internal static class LoginEndpoint
             {
                 var command = new LoginCommand(request.Username, request.Password);
                 var result = await dispatcher.SendAsync<LoginCommand, LoginResult>(command, cancellationToken);
-                return Results.Ok(result);
+                return TypedResults.Ok(result);
             })
             .AllowAnonymous()
             // No session cookie exists yet at login time, so there is nothing to

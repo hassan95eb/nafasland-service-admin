@@ -1,0 +1,10 @@
+:80 {
+	@backend path /api /api/*
+	handle @backend {
+		reverse_proxy api:8080
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}

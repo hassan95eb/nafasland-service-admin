@@ -32,6 +32,19 @@ services:
       - catalog-obj:/src/src/Modules/Catalog/obj
       - catalog-bin:/src/src/Modules/Catalog/bin
 
+  web:
+    build:
+      target: deps
+    command: ["npm", "run", "dev", "--", "--hostname", "0.0.0.0"]
+    volumes:
+      - ./src/Web:/app
+      - web-node-modules:/app/node_modules
+      - web-next:/app/.next
+
+  proxy:
+    ports:
+      - "${PROXY_HTTP_PORT:-8000}:80"
+
 volumes:
   api-obj:
   api-bin:
@@ -47,3 +60,5 @@ volumes:
   auditing-bin:
   catalog-obj:
   catalog-bin:
+  web-node-modules:
+  web-next:

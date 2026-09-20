@@ -114,6 +114,10 @@ builder.Services.AddAntiforgery(options =>
     options.HeaderName = "X-XSRF-TOKEN";
 });
 
+// The document is exposed only in Development and is consumed manually by
+// openapi-typescript; it is not part of the production attack surface (ADR-051).
+builder.Services.AddOpenApi();
+
 // ---------- Shared infrastructure: CorrelationId, Authorization Policy, mandatory pipeline (ADR-006, ADR-036) ----------
 builder.Services.AddSharedInfrastructure();
 
@@ -224,6 +228,11 @@ app.UseAuthorization();
 app.UseAntiforgeryValidation();
 
 app.MapHealthChecks("/health");
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+
 app.MapModuleEndpoints(moduleDiscovery.EnabledModules);
 
 app.Run();

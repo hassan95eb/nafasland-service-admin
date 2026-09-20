@@ -1,13 +1,14 @@
 # NafasLand Admin
 
-پنل مدیریت مستقل برای کارکنان نفس‌لند، روی API پرتال. علاوه بر Identity و
-گزارش فعالیت، ماژول Catalog لایهٔ خواندن محصولات پرتال را فراهم می‌کند:
-فهرست صفحه‌بندی‌شده با کش کوتاه‌مدت و جزئیات همیشه‌تازه. برای تصمیم‌های معماری به
-`DECISIONS.md` و برای ترتیب کار به `ROADMAP.md` مراجعه کن.
+پنل مدیریت مستقل برای کارکنان نفس‌لند، روی API پرتال. فرانت فارسی و RTL از
+پشت reverse proxy به API متصل می‌شود و فهرست صفحه‌بندی‌شدهٔ محصولات را به‌صورت
+فقط‌خواندنی نمایش می‌دهد. برای تصمیم‌های معماری به `DECISIONS.md` و برای ترتیب
+کار به `ROADMAP.md` مراجعه کن.
 
 ## پیش‌نیازها
 
 - .NET SDK 10 (LTS)
+- Node.js 24 و npm 11 (برای اجرای فرانت بدون Docker)
 - Docker و Docker Compose (برای اجرای کامل استک با SQL Server)
 - ابزار `dotnet-ef` برای اجرای مهاجرت‌ها:
 
@@ -64,6 +65,18 @@ dotnet ef database update \
 dotnet run --project src/Api/NafasLand.Admin.Api.csproj
 ```
 
+فرانت برای چک permission سمت سرور باید API را از یک آدرس داخلی در دسترس داشته
+باشد. در اجرای بدون Docker، در یک ترمینال دیگر:
+
+```bash
+cd src/Web
+npm ci
+INTERNAL_API_BASE_URL=http://localhost:8080 npm run dev
+```
+
+در این حالت برای یکپارچگی کوکی هم‌مبدأ، اجرای کامل با Compose و proxy توصیه
+می‌شود؛ اجرای جداگانهٔ بالا بیشتر برای توسعهٔ رابط کاربری است.
+
 اولین بار که برنامه بالا می‌آید، اگر هیچ کاربر SuperAdmin ای وجود نداشته
 باشد، حساب آن از روی `Identity:SuperAdmin:Username`/`Password` ساخته می‌شود
 (ADR-022)، با `MustChangePassword = true`.
@@ -80,8 +93,10 @@ docker compose up --build
 ```
 
 `compose.override.yaml` به‌صورت پیش‌فرض همراه `compose.yaml` خوانده می‌شود و
-حالت توسعه (پورت باز، hot reload با `dotnet watch`) را فعال می‌کند. برای
-استقرار:
+حالت توسعه (hot reload بک‌اند و فرانت) را فعال می‌کند. پنل را از
+`http://localhost:8000` باز کن؛ مرورگر همیشه از همین proxy وارد می‌شود و پورت
+خام سرویس `web` عمداً به host باز نشده است. پورت ۸۰۰۰ با
+`PROXY_HTTP_PORT` قابل تغییر است. برای استقرار:
 
 ```bash
 docker compose -f compose.yaml -f compose.prod.yaml up -d --build
@@ -112,7 +127,22 @@ dotnet ef database update \
   --connection "Server=localhost,1433;Database=NafasLandAdmin;User Id=sa;Password=<همان MSSQL_SA_PASSWORD>;TrustServerCertificate=True;"
 ```
 
-بررسی سلامت: `curl http://localhost:8080/health`.
+بررسی سلامت مستقیم API: `curl http://localhost:8080/health`.
+
+### تولید تایپ‌های API برای فرانت
+
+سند OpenAPI فقط وقتی API در محیط Development اجرا می‌شود روی
+`/openapi/v1.json` در دسترس است. پس از بالا آمدن API، تایپ‌های TypeScript را
+دستی بازتولید کن:
+
+```bash
+cd src/Web
+npm run generate:api-types
+```
+
+اگر API روی آدرس دیگری است، متغیر `OPENAPI_URL` را برای همان دستور تنظیم کن.
+این تولید عمداً بخشی از `dev` یا `build` نیست تا بیلد فرانت به API در حال اجرا
+وابسته نشود.
 
 ## احراز هویت (ماژول Identity، گام ۱)
 
@@ -274,6 +304,8 @@ curl -s "http://localhost:8080/api/v1/catalog/products/<Portal:TestProductId>" \
 | `IDENTITY__SUPERADMIN__USERNAME` | نام کاربری اولین حساب SuperAdmin (فقط اگر هیچ SuperAdmin ای وجود نداشته باشد استفاده می‌شود) |
 | `IDENTITY__SUPERADMIN__PASSWORD` | رمز اولیهٔ همان حساب؛ در اولین ورود اجباراً عوض می‌شود |
 | `API_HTTP_PORT` | پورت باز شده به host فقط در حالت توسعه |
+| `PROXY_HTTP_PORT` | ورودی مرورگر به reverse proxy در توسعه؛ پیش‌فرض ۸۰۰۰ |
+| `INTERNAL_API_BASE_URL` | آدرس API در شبکهٔ داخلی برای Server Componentهای Next.js؛ پیش‌فرض `http://api:8080` |
 
 ## Hangfire
 
@@ -289,6 +321,12 @@ Hangfire هنگام اتصال، schema و جدول‌های داخلی خودش
 ```bash
 dotnet build NafasLand.Admin.sln
 dotnet test NafasLand.Admin.sln
+
+cd src/Web
+npx tsc --noEmit
+npm run lint
+npm test
+npm run build
 ```
 
 هیچ تستی به SQL Server واقعی وصل نمی‌شود. تست‌های handler که فقط
