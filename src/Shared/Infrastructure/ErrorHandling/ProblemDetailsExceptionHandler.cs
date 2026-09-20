@@ -70,6 +70,18 @@ internal sealed class ProblemDetailsExceptionHandler(ILogger<ProblemDetailsExcep
                 Title = "توکن antiforgery نامعتبر یا موجود نیست",
                 Detail = antiforgeryFailed.Message,
             },
+            PortalBusyException portalBusy => new ProblemDetails
+            {
+                Status = StatusCodes.Status429TooManyRequests,
+                Title = "سامانه شلوغ است",
+                Detail = portalBusy.Message,
+            },
+            PortalUnavailableException portalUnavailable => new ProblemDetails
+            {
+                Status = StatusCodes.Status503ServiceUnavailable,
+                Title = "پرتال در دسترس نیست",
+                Detail = portalUnavailable.Message,
+            },
             CommandValidationException validation => BuildValidationProblemDetails(validation),
             _ => new ProblemDetails
             {

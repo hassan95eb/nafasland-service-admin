@@ -8,6 +8,7 @@ using NafasLand.Admin.Api.Authentication;
 using NafasLand.Admin.Api.Configuration;
 using NafasLand.Admin.Api.HealthChecks;
 using NafasLand.Admin.Modules.Auditing.Contracts;
+using NafasLand.Admin.Modules.Catalog.Contracts.Configuration;
 using NafasLand.Admin.Modules.Identity.Contracts;
 using NafasLand.Admin.Shared.Infrastructure.Configuration;
 using NafasLand.Admin.Shared.Infrastructure.Extensions;

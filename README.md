@@ -1,9 +1,8 @@
 # NafasLand Admin
 
-پنل مدیریت مستقل برای کارکنان نفس‌لند، روی API پرتال. این مخزن اسکلت
-راه‌رونده (گام ۰) به‌علاوهٔ Identity و مدل دسترسی (گام ۱ نقشهٔ راه) را دارد:
-کاربر/نقش/permission واقعی، ورود با کوکی، و اولین حساب SuperAdmin. هنوز هیچ
-منطق محصولی یا تماسی با پرتال وجود ندارد. برای تصمیم‌های معماری به
+پنل مدیریت مستقل برای کارکنان نفس‌لند، روی API پرتال. علاوه بر Identity و
+گزارش فعالیت، ماژول Catalog لایهٔ خواندن محصولات پرتال را فراهم می‌کند:
+فهرست صفحه‌بندی‌شده با کش کوتاه‌مدت و جزئیات همیشه‌تازه. برای تصمیم‌های معماری به
 `DECISIONS.md` و برای ترتیب کار به `ROADMAP.md` مراجعه کن.
 
 ## پیش‌نیازها
@@ -25,14 +24,15 @@ Secrets تنظیم کن (این‌ها در گیت نیستند و اجباری�
 ```bash
 cd src/Api
 dotnet user-secrets set "Database:ConnectionString" "Server=localhost;Database=NafasLandAdmin;User Id=sa;Password=<رمز>;TrustServerCertificate=True;"
+dotnet user-secrets set "Portal:BearerToken" "<توکن سرویس‌اکانت پرتال>"
 dotnet user-secrets set "Portal:TestProductId" "<شناسهٔ محصول تستی>"
 dotnet user-secrets set "Identity:SuperAdmin:Username" "superadmin"
 dotnet user-secrets set "Identity:SuperAdmin:Password" "<رمز اولیهٔ قوی>"
 ```
 
-`Portal:BaseUrl` و `Portal:RateLimitPerSecond` مقدار پیش‌فرض در
-`appsettings.json` دارند و در این گام هیچ تماسی با پرتال زده نمی‌شود؛ فقط
-اعتبارسنجی کانفیگ در استارتاپ امتحان می‌شود (ADR-039).
+`Portal:BaseUrl`، نرخ ۱.۵ درخواست در ثانیه، ظرفیت صف ۲۰ و مهلت صف ۱۵ ثانیه
+مقدار پیش‌فرض در `appsettings.json` دارند. نبود `Portal:BearerToken` یا
+`Portal:TestProductId` برنامه را در startup متوقف می‌کند (ADR-039).
 
 ۲. یک SQL Server در دسترس داشته باش (مثلاً همان کانتینر `mssql` از
 `compose.yaml`، یا یک نصب محلی).
@@ -73,7 +73,7 @@ dotnet run --project src/Api/NafasLand.Admin.Api.csproj
 ```bash
 cp .env.example .env
 # مقدارهای واقعی را در .env پر کن: MSSQL_SA_PASSWORD، DATABASE__CONNECTIONSTRING،
-# PORTAL__BASEURL، PORTAL__TESTPRODUCTID،
+# PORTAL__BASEURL، PORTAL__BEARERTOKEN، PORTAL__TESTPRODUCTID،
 # IDENTITY__SUPERADMIN__USERNAME، IDENTITY__SUPERADMIN__PASSWORD
 
 docker compose up --build
@@ -237,6 +237,26 @@ curl -s -X POST http://localhost:8080/api/v1/audit/export \
 ۲۵٬۰۰۰ ردیف) هم یک Hangfire job است و فایلش در `backups/audit-exports/`
 می‌نشیند (هر دو مسیر از قبل در `.gitignore` هستند، چون زیرمجموعهٔ `backups/`اند).
 
+## خواندن محصولات پرتال (ماژول Catalog، گام ۳)
+
+هر دو endpoint به کوکی ورود و permission به نام `catalog.products.read` نیاز
+دارند. فهرست برای هر ترکیب پارامتر ۶۰ ثانیه در حافظه کش می‌شود؛ جزئیات محصول
+همیشه مستقیم و فقط با `GET` از پرتال خوانده می‌شود. این ماژول دیتابیس، migration
+یا هیچ مسیر نوشتنی روی پرتال ندارد.
+
+```bash
+# بعد از ورود و ذخیرهٔ کوکی در cookies.txt
+curl -s "http://localhost:8080/api/v1/catalog/products?page=1&pageSize=25&keywords=پوست&sorting=newest" \
+  -b cookies.txt
+
+curl -s "http://localhost:8080/api/v1/catalog/products/<Portal:TestProductId>" \
+  -b cookies.txt
+```
+
+پارامتر ورودی پنل `pageSize` است و کلاینت پرتال آن را فعلاً با نام `size`
+می‌فرستد. اثر واقعی `page`، `size`، `keywords` و `sorting` باید با توکن واقعی
+به‌صورت دستی تأیید شود؛ تست‌های خودکار فقط از fake استفاده می‌کنند.
+
 ## متغیرهای محیطی (`.env`)
 
 کلیدها در `.env.example` مستندند؛ هیچ مقدار واقعی در گیت نیست (ADR-039).
@@ -245,8 +265,12 @@ curl -s -X POST http://localhost:8080/api/v1/audit/export \
 | --- | --- |
 | `MSSQL_SA_PASSWORD` | رمز اکانت `sa` در کانتینر `mssql` |
 | `DATABASE__CONNECTIONSTRING` | رشتهٔ اتصال کامل Api به `mssql` |
-| `PORTAL__BASEURL` | آدرس پایهٔ API پرتال (هنوز هیچ تماسی زده نمی‌شود) |
-| `PORTAL__TESTPRODUCTID` | شناسهٔ محصول تستی (هنوز ساخته نشده؛ نک. «موارد باز» پایین) |
+| `PORTAL__BASEURL` | آدرس پایهٔ API مدیریتی پرتال |
+| `PORTAL__BEARERTOKEN` | توکن سرویس‌اکانت؛ فقط در بک‌اند نگهداری می‌شود و نباید لاگ شود |
+| `PORTAL__TESTPRODUCTID` | شناسهٔ محصول تستی برای آزمایش دستی خواندن |
+| `PORTAL__RATELIMITPERSECOND` | نرخ هدف سراسری؛ پیش‌فرض ۱.۵ درخواست در ثانیه |
+| `PORTAL__RATELIMITQUEUECAPACITY` | ظرفیت صف درخواست‌های پرتال؛ پیش‌فرض ۲۰ |
+| `PORTAL__RATELIMITQUEUETIMEOUTSECONDS` | بیشینهٔ انتظار در صف؛ پیش‌فرض ۱۵ ثانیه |
 | `IDENTITY__SUPERADMIN__USERNAME` | نام کاربری اولین حساب SuperAdmin (فقط اگر هیچ SuperAdmin ای وجود نداشته باشد استفاده می‌شود) |
 | `IDENTITY__SUPERADMIN__PASSWORD` | رمز اولیهٔ همان حساب؛ در اولین ورود اجباراً عوض می‌شود |
 | `API_HTTP_PORT` | پورت باز شده به host فقط در حالت توسعه |

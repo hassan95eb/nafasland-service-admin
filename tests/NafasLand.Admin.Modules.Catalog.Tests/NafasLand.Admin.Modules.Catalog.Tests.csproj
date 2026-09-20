@@ -23,10 +23,11 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Shared\Kernel\NafasLand.Admin.Shared.Kernel.csproj" />
     <ProjectReference Include="..\..\src\Shared\Infrastructure\NafasLand.Admin.Shared.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\src\Modules\Sample\NafasLand.Admin.Modules.Sample.csproj" />
-    <ProjectReference Include="..\..\src\Modules\Identity\NafasLand.Admin.Modules.Identity.csproj" />
-    <ProjectReference Include="..\..\src\Modules\Auditing\NafasLand.Admin.Modules.Auditing.csproj" />
     <ProjectReference Include="..\..\src\Modules\Catalog\NafasLand.Admin.Modules.Catalog.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Fixtures\*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

@@ -34,6 +34,8 @@
     <ProjectReference Include="..\Modules\Identity\NafasLand.Admin.Modules.Identity.csproj" />
     <!-- Only for assembly discovery (ADR-005); Api never references Auditing's types directly. -->
     <ProjectReference Include="..\Modules\Auditing\NafasLand.Admin.Modules.Auditing.csproj" />
+    <!-- Catalog contracts provide PortalOptions; the assembly is also discovered as a module. -->
+    <ProjectReference Include="..\Modules\Catalog\NafasLand.Admin.Modules.Catalog.csproj" />
   </ItemGroup>
 
 </Project>

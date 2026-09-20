@@ -1,0 +1,28 @@
+{
+  "success": true,
+  "description": "این متن نباید به قرارداد داخلی راه پیدا کند",
+  "total": 5833,
+  "count": 2,
+  "products": [
+    {
+      "id": 101,
+      "title": "محصول بدون قیمت",
+      "slug": "محصول-بدون-قیمت",
+      "url": "/site/product/101",
+      "price": null,
+      "created_at": {
+        "date": "1405/06/22",
+        "universal": "01/01/2000",
+        "timestamp": 1789282560
+      },
+      "status": ["pending", "unavailable"]
+    },
+    {
+      "id": "102",
+      "title": "محصول قیمت‌دار",
+      "price": 608800,
+      "timestamp": "1789282576",
+      "status": ["approved", "available", "sale"]
+    }
+  ]
+}

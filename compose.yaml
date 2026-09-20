@@ -28,7 +28,11 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       Database__ConnectionString: ${DATABASE__CONNECTIONSTRING:?رشتهٔ اتصال در .env تعریف نشده است}
       Portal__BaseUrl: ${PORTAL__BASEURL:?آدرس پرتال در .env تعریف نشده است}
+      Portal__BearerToken: ${PORTAL__BEARERTOKEN:?توکن پرتال در .env تعریف نشده است}
       Portal__TestProductId: ${PORTAL__TESTPRODUCTID:?شناسهٔ محصول تستی در .env تعریف نشده است}
+      Portal__RateLimitPerSecond: ${PORTAL__RATELIMITPERSECOND:-1.5}
+      Portal__RateLimitQueueCapacity: ${PORTAL__RATELIMITQUEUECAPACITY:-20}
+      Portal__RateLimitQueueTimeoutSeconds: ${PORTAL__RATELIMITQUEUETIMEOUTSECONDS:-15}
       Identity__SuperAdmin__Username: ${IDENTITY__SUPERADMIN__USERNAME:?نام کاربری سوپرادمین در .env تعریف نشده است}
       Identity__SuperAdmin__Password: ${IDENTITY__SUPERADMIN__PASSWORD:?رمز اولیهٔ سوپرادمین در .env تعریف نشده است}
     volumes:
