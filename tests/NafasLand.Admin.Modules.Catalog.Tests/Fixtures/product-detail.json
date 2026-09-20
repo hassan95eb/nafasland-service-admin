@@ -1,0 +1,48 @@
+{
+  "success": true,
+  "description": "این متن متعلق به پرتال است",
+  "product": {
+    "id": 101,
+    "title": "محصول نمونه",
+    "slug": "محصول-نمونه",
+    "url": "/site/product/101",
+    "description": "<p>توضیح</p>",
+    "contents": "<p>محتوا</p>",
+    "price": "608800",
+    "created_at": {
+      "date": "1405/06/22",
+      "universal": "01/01/2000",
+      "timestamp": 1789282560
+    },
+    "status": ["pending", "available"],
+    "category": { "id": 999, "title": "نباید خوانده شود" },
+    "categories": [
+      { "id": 178004128, "title": "مراقبت", "url": "/site/pages/category/178004128", "weight": 3 }
+    ],
+    "attributes": [{ "id": 998, "title": "نباید خوانده شود" }],
+    "filters": [
+      { "id": "179221238", "title": "ژک ساف", "url": "/site/pages/filter/179221238", "weight": 4 }
+    ],
+    "images": [
+      { "path": "/uploads/products/24fc99.webp", "title": "تصویر اصلی" }
+    ],
+    "variants": [
+      {
+        "id": 501,
+        "product_id": 101,
+        "sku": "SKU-501",
+        "price": 608800,
+        "compare_price": 650000,
+        "stock": 7,
+        "shipping": 0,
+        "tax": 0,
+        "image": "/uploads/products/variant.webp",
+        "files": ["ignored.pdf"]
+      }
+    ],
+    "relates": [201, "202"],
+    "meta_keywords": ["پوست", "مراقبت"],
+    "canonical_url": "https://example.test/product/101",
+    "version": "639250631030770000"
+  }
+}

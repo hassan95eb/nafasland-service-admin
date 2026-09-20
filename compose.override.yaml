@@ -29,6 +29,8 @@ services:
       - identity-bin:/src/src/Modules/Identity/bin
       - auditing-obj:/src/src/Modules/Auditing/obj
       - auditing-bin:/src/src/Modules/Auditing/bin
+      - catalog-obj:/src/src/Modules/Catalog/obj
+      - catalog-bin:/src/src/Modules/Catalog/bin
 
 volumes:
   api-obj:
@@ -43,3 +45,5 @@ volumes:
   identity-bin:
   auditing-obj:
   auditing-bin:
+  catalog-obj:
+  catalog-bin:
