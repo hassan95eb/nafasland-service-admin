@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 using NafasLand.Admin.Modules.Catalog.Contracts;
 using NafasLand.Admin.Modules.Catalog.Contracts.Models;
@@ -17,7 +18,7 @@ internal static class ListProductsEndpoint
             .RequirePermission(CatalogPermissions.ProductsRead);
     }
 
-    internal static async Task<IResult> HandleAsync(
+    internal static async Task<Results<Ok<PortalProductListResult>, ValidationProblem>> HandleAsync(
         int page,
         int pageSize,
         string? keywords,
@@ -28,7 +29,7 @@ internal static class ListProductsEndpoint
     {
         if (page < 1 || pageSize is < 1 or > 100)
         {
-            return Results.ValidationProblem(new Dictionary<string, string[]>
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {
                 ["pagination"] = ["page باید حداقل ۱ و pageSize باید بین ۱ تا ۱۰۰ باشد."],
             });
@@ -40,6 +41,6 @@ internal static class ListProductsEndpoint
             token => client.ListProductsAsync(query, token),
             cancellationToken);
 
-        return Results.Ok(result);
+        return TypedResults.Ok(result);
     }
 }

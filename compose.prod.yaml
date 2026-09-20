@@ -7,3 +7,9 @@ services:
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+
+  web:
+    restart: unless-stopped
+
+  proxy:
+    restart: unless-stopped

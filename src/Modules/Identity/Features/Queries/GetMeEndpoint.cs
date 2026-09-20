@@ -41,16 +41,22 @@ internal static class GetMeEndpoint
                     .Select(claim => claim.Value)
                     .ToList();
 
-                return Results.Ok(new
-                {
+                return TypedResults.Ok(new MeResponse(
                     user.Id,
                     user.Username,
                     user.MustChangePassword,
                     user.IsActive,
-                    Roles = roleNames,
-                    Permissions = permissions,
-                });
+                    roleNames,
+                    permissions));
             })
             .RequireAuthorization();
     }
 }
+
+internal sealed record MeResponse(
+    Guid Id,
+    string Username,
+    bool MustChangePassword,
+    bool IsActive,
+    IReadOnlyList<string> Roles,
+    IReadOnlyList<string> Permissions);
