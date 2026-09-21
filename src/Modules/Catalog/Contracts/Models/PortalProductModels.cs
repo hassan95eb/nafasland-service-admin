@@ -11,7 +11,9 @@ public sealed record PortalProductListResult(
     int Total,
     int Count,
     int Page,
-    int PageSize);
+    int PageSize,
+    bool IsStale = false,
+    DateTimeOffset? AsOfUtc = null);
 
 public sealed record PortalProductSummary(
     string Id,
@@ -44,7 +46,9 @@ public sealed record PortalProductDetail(
     IReadOnlyList<string> Relates,
     IReadOnlyList<string> MetaKeywords,
     string? CanonicalUrl,
-    string? Version)
+    string? Version,
+    bool IsStale = false,
+    DateTimeOffset? AsOfUtc = null)
 {
     public bool IsPending => Statuses.Contains("pending", StringComparer.OrdinalIgnoreCase);
 
@@ -70,3 +74,5 @@ public sealed record PortalProductVariant(
     int? Stock,
     decimal? Shipping,
     decimal? Tax);
+
+public sealed record PortalVariantPatch(decimal? Price, int? Stock);

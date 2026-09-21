@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 using NafasLand.Admin.Modules.Catalog.Contracts;
+using NafasLand.Admin.Modules.Catalog.Contracts.Models;
+using NafasLand.Admin.Modules.Catalog.Infrastructure;
 using NafasLand.Admin.Shared.Infrastructure.Authorization;
 using NafasLand.Admin.Shared.Infrastructure.CorrelationId;
 
@@ -16,19 +19,23 @@ internal static class GetProductEndpoint
             .RequirePermission(CatalogPermissions.ProductsRead);
     }
 
-    internal static async Task<IResult> HandleAsync(
+    internal static async Task<Results<Ok<PortalProductDetail>, ProblemHttpResult>> HandleAsync(
         string externalProductId,
+        ProductCache cache,
         IPortalProductClient client,
         ICorrelationIdAccessor correlationIdAccessor,
         CancellationToken cancellationToken)
     {
-        var product = await client.GetProductAsync(externalProductId, cancellationToken);
+        var product = await cache.GetDetailAsync(
+            externalProductId,
+            token => client.GetProductAsync(externalProductId, token),
+            cancellationToken);
         if (product is not null)
         {
-            return Results.Ok(product);
+            return TypedResults.Ok(product);
         }
 
-        return Results.Problem(
+        return TypedResults.Problem(
             statusCode: StatusCodes.Status404NotFound,
             title: "محصول پیدا نشد",
             detail: "محصول در پرتال پیدا نشد.",

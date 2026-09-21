@@ -11,4 +11,13 @@ public interface IPortalProductClient
     public Task<PortalProductDetail?> GetProductAsync(
         string externalProductId,
         CancellationToken cancellationToken);
+
+    public Task<PortalProductVariant?> GetVariantAsync(
+        string externalVariantId,
+        CancellationToken cancellationToken);
+
+    public Task UpdateVariantAsync(
+        string externalVariantId,
+        PortalVariantPatch patch,
+        CancellationToken cancellationToken);
 }

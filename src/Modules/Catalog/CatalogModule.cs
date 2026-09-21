@@ -1,12 +1,22 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NafasLand.Admin.Modules.Catalog.Contracts;
 using NafasLand.Admin.Modules.Catalog.Contracts.Configuration;
 using NafasLand.Admin.Modules.Catalog.Features.Queries;
+using NafasLand.Admin.Modules.Catalog.Features.UpdateVariantPriceAndInventory;
 using NafasLand.Admin.Modules.Catalog.Infrastructure;
+using NafasLand.Admin.Modules.Catalog.Jobs;
+using NafasLand.Admin.Modules.Catalog.Persistence;
+using NafasLand.Admin.Shared.Infrastructure.Configuration;
+using NafasLand.Admin.Shared.Infrastructure.Persistence;
+using NafasLand.Admin.Shared.Kernel.Idempotency;
+using NafasLand.Admin.Shared.Kernel.Messaging;
 using NafasLand.Admin.Shared.Kernel.Modules;
+using NafasLand.Admin.Shared.Kernel.Persistence;
 using NafasLand.Admin.Shared.Kernel.Permissions;
 using Polly;
 
@@ -19,11 +29,32 @@ internal sealed class CatalogModule : IModule
         var portalOptions = configuration.GetSection(PortalOptions.SectionName).Get<PortalOptions>()
             ?? new PortalOptions();
 
+        services.AddDbContext<CatalogDbContext>((serviceProvider, options) =>
+        {
+            var databaseOptions = serviceProvider.GetRequiredService<IOptions<DatabaseOptions>>().Value;
+            options.UseSqlServer(
+                databaseOptions.ConnectionString,
+                sql => sql.MigrationsHistoryTable("__EFMigrationsHistory", CatalogDbContext.SchemaName));
+        });
+
+        services.AddKeyedScoped<IUnitOfWork>(
+            "Catalog",
+            (serviceProvider, _) => serviceProvider.GetRequiredService<CatalogDbContext>());
+        services.AddScoped<IIdempotencyStore, CatalogIdempotencyStore>();
+        services.AddScoped<IMigrationCheck, EfCoreMigrationCheck<CatalogDbContext>>();
+        services.AddHealthChecks()
+            .AddCheck<EfCoreDatabaseHealthCheck<CatalogDbContext>>("catalog-database");
+
         services.AddMemoryCache();
         services.AddSingleton<PortalRateLimiter>();
         services.AddTransient<PortalRateLimitingHandler>();
-        services.AddSingleton<ProductListCache>();
+        services.AddSingleton<ProductCache>();
         services.AddSingleton<IPortalTokenProvider, PortalTokenProvider>();
+        services.AddScoped<IdempotencyPurgeJob>();
+        services.AddScoped<ICatalogBootstrapper, CatalogBootstrapper>();
+        services.AddScoped<IValidator<UpdateVariantPriceAndInventoryCommand>, UpdateVariantPriceAndInventoryCommandValidator>();
+        services.AddScoped<ICommandHandler<UpdateVariantPriceAndInventoryCommand, UpdateVariantPriceAndInventoryResult>,
+            UpdateVariantPriceAndInventoryCommandHandler>();
 
         var httpClient = services.AddHttpClient<IPortalProductClient, PortalProductClient>((serviceProvider, client) =>
         {
@@ -63,10 +94,12 @@ internal sealed class CatalogModule : IModule
     {
         ListProductsEndpoint.Map(app);
         GetProductEndpoint.Map(app);
+        UpdateVariantPriceAndInventoryEndpoint.Map(app);
     }
 
     public IReadOnlyList<PermissionDefinition> Permissions { get; } =
     [
         new PermissionDefinition(CatalogPermissions.ProductsRead, "مشاهدهٔ محصولات"),
+        new PermissionDefinition(CatalogPermissions.ProductsWrite, "ویرایش قیمت و موجودی محصولات"),
     ];
 }
