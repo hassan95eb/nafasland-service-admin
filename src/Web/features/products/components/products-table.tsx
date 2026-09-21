@@ -23,7 +23,9 @@ export function ProductsTable({ products }: { products: ProductSummary[] }) {
           {products.map((product) => (
             <tr className="border-t border-[var(--border)]" key={product.id}>
               <td className="px-4 py-4">
-                <p className="max-w-sm font-bold">{product.title || "بدون عنوان"}</p>
+                <Link className="max-w-sm font-bold text-[var(--primary)] hover:underline" href={`/products/${encodeURIComponent(product.id)}`}>
+                  {product.title || "بدون عنوان"}
+                </Link>
                 <p className="mt-1 text-xs text-[var(--muted)]">شناسه: {product.id}</p>
               </td>
               <td className="whitespace-nowrap px-4 py-4">{formatPrice(product.price)}</td>
@@ -45,3 +47,4 @@ export function ProductsTable({ products }: { products: ProductSummary[] }) {
     </div>
   );
 }
+import Link from "next/link";

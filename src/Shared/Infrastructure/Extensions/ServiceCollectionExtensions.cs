@@ -19,7 +19,7 @@ public static class ServiceCollectionExtensions
     /// Shared infrastructure: CorrelationId, a permission-based Authorization
     /// Policy, and the mandatory pipeline with the exact ADR-006 order. The
     /// registration order below is the same as the execution order: Logging →
-    /// Validation → Authorization → Transaction → Audit.
+    /// Validation → Authorization → Idempotency → Transaction → Audit.
     /// </summary>
     public static IServiceCollection AddSharedInfrastructure(this IServiceCollection services)
     {
@@ -46,6 +46,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
+        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(IdempotencyBehavior<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(TransactionBehavior<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AuditBehavior<,>));
 

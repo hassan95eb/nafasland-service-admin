@@ -50,7 +50,7 @@ public sealed class CatalogEndpointTests
     }
 
     [Fact]
-    public async Task جزئیات_هیچ‌گاه_کش_نمی‌شود()
+    public async Task فراخوانی_دوم_جزئیات_از_کش_می‌آید()
     {
         var fake = new FakePortalProductClient();
         await using var host = await EndpointHost.StartAsync(fake);
@@ -61,7 +61,7 @@ public sealed class CatalogEndpointTests
 
         Assert.Equal(HttpStatusCode.OK, first.StatusCode);
         Assert.Equal(HttpStatusCode.OK, second.StatusCode);
-        Assert.Equal(2, fake.DetailCallCount);
+        Assert.Equal(1, fake.DetailCallCount);
     }
 
     [Fact]
@@ -94,7 +94,8 @@ public sealed class CatalogEndpointTests
             builder.Services.AddMemoryCache();
             builder.Services.AddSingleton(fake);
             builder.Services.AddSingleton<IPortalProductClient>(fake);
-            builder.Services.AddSingleton<ProductListCache>();
+            builder.Services.AddSingleton(TimeProvider.System);
+            builder.Services.AddSingleton<ProductCache>();
             builder.Services.AddSingleton<ICorrelationIdAccessor>(new StubCorrelationIdAccessor());
 
             var app = builder.Build();

@@ -8,7 +8,7 @@ import { useDebouncedValue } from "@/features/products/hooks/use-debounced-value
 import { useProducts } from "@/features/products/hooks/use-products";
 import { filterProductsWithoutPrice } from "@/features/products/schemas/product-filters";
 import { ApiError, presentApiError } from "@/shared/lib/api-client";
-import { formatPersianNumber } from "@/shared/lib/formatters";
+import { formatPersianDateTime, formatPersianNumber } from "@/shared/lib/formatters";
 import { Pagination } from "@/shared/data-table/pagination";
 import { Alert } from "@/shared/ui/alert";
 import { Input } from "@/shared/ui/input";
@@ -79,6 +79,12 @@ export function ProductList() {
 
       {query.error && !(query.error instanceof ApiError && query.error.status === 401) ? (
         <Alert>{presentApiError(query.error)}</Alert>
+      ) : null}
+
+      {query.data?.isStale ? (
+        <Alert tone="warning">
+          ارتباط با فروشگاه برقرار نیست؛ داده‌های نمایش‌داده‌شده مربوط به {formatPersianDateTime(query.data.asOfUtc)} است.
+        </Alert>
       ) : null}
 
       <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-white shadow-sm" aria-busy={query.isFetching}>

@@ -23,7 +23,7 @@ internal static class ListProductsEndpoint
         int pageSize,
         string? keywords,
         string? sorting,
-        ProductListCache cache,
+        ProductCache cache,
         IPortalProductClient client,
         CancellationToken cancellationToken)
     {
@@ -36,7 +36,7 @@ internal static class ListProductsEndpoint
         }
 
         var query = new PortalProductListQuery(page, pageSize, keywords, sorting);
-        var result = await cache.GetOrCreateAsync(
+        var result = await cache.GetListAsync(
             query,
             token => client.ListProductsAsync(query, token),
             cancellationToken);

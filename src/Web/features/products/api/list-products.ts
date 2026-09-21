@@ -13,6 +13,7 @@ export interface ProductListParams {
 export const productQueryKeys = {
   all: ["products"] as const,
   list: (params: ProductListParams) => [...productQueryKeys.all, "list", params] as const,
+  detail: (id: string) => [...productQueryKeys.all, "detail", id] as const,
 };
 
 export function listProducts(params: ProductListParams) {

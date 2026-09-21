@@ -8,7 +8,7 @@ namespace NafasLand.Admin.Architecture.Tests;
 /// <summary>
 /// Guarantees the mandatory pipeline's exact order (ADR-006) against the real
 /// AddSharedInfrastructure registration: Logging → Validation → Authorization →
-/// Transaction → Audit.
+/// Idempotency → Transaction → Audit.
 /// </summary>
 public sealed class PipelineOrderTests
 {
@@ -32,6 +32,7 @@ public sealed class PipelineOrderTests
                 "LoggingBehavior`2",
                 "ValidationBehavior`2",
                 "AuthorizationBehavior`2",
+                "IdempotencyBehavior`2",
                 "TransactionBehavior`2",
                 "AuditBehavior`2",
             ],

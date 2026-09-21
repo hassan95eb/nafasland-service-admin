@@ -44,6 +44,13 @@ internal static class PortalProductMapper
             ReadString(product, "version"));
     }
 
+    public static PortalProductVariant MapVariant(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        var variant = FindObject(document.RootElement, "variant", "data");
+        return MapVariant(variant);
+    }
+
     private static PortalProductSummary MapSummary(JsonElement product)
     {
         return new PortalProductSummary(
@@ -97,16 +104,21 @@ internal static class PortalProductMapper
 
         return values.EnumerateArray()
             .Where(value => value.ValueKind == JsonValueKind.Object)
-            .Select(value => new PortalProductVariant(
-                ReadRequiredString(value, "id"),
-                ReadString(value, "product_id"),
-                ReadString(value, "sku"),
-                ReadDecimal(value, "price"),
-                ReadDecimal(value, "compare_price"),
-                ReadInt(value, "stock"),
-                ReadDecimal(value, "shipping"),
-                ReadDecimal(value, "tax")))
+            .Select(MapVariant)
             .ToArray();
+    }
+
+    private static PortalProductVariant MapVariant(JsonElement value)
+    {
+        return new PortalProductVariant(
+            ReadRequiredString(value, "id"),
+            ReadString(value, "product_id"),
+            ReadString(value, "sku"),
+            ReadDecimal(value, "price"),
+            ReadDecimal(value, "compare_price"),
+            ReadInt(value, "stock"),
+            ReadDecimal(value, "shipping"),
+            ReadDecimal(value, "tax"));
     }
 
     private static DateTime? ReadTimestamp(JsonElement product)

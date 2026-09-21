@@ -8,8 +8,8 @@ public delegate Task<TResponse> CommandHandlerDelegate<TResponse>();
 
 /// <summary>
 /// One link in the mandatory pipeline (ADR-006). Execution order is determined by
-/// DI registration order: Logging → Validation → Authorization → Transaction →
-/// Audit → Handler.
+/// DI registration order: Logging → Validation → Authorization → Idempotency →
+/// Transaction → Audit → Handler.
 /// </summary>
 public interface IPipelineBehavior<TCommand, TResponse>
     where TCommand : ICommand<TResponse>
