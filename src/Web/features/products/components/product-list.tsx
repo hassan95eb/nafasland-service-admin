@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { ProductsTable } from "@/features/products/components/products-table";
@@ -12,6 +13,7 @@ import { formatPersianDateTime, formatPersianNumber } from "@/shared/lib/formatt
 import { Pagination } from "@/shared/data-table/pagination";
 import { Alert } from "@/shared/ui/alert";
 import { Input } from "@/shared/ui/input";
+import { Can } from "@/shared/permissions/permission-context";
 
 const pageSize = 25;
 
@@ -38,11 +40,14 @@ export function ProductList() {
 
   return (
     <section className="space-y-5">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-black">محصولات</h1>
-        <p className="text-sm text-[var(--muted)]">
-          فهرست زندهٔ پرتال؛ {formatPersianNumber(query.data?.total ?? 0)} محصول
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-black">محصولات</h1>
+          <p className="text-sm text-[var(--muted)]">فهرست زندهٔ پرتال؛ {formatPersianNumber(query.data?.total ?? 0)} محصول</p>
+        </div>
+        <Can permission="catalog.products.write">
+          <Link className="rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-bold text-white" href="/products/new">ایجاد محصول</Link>
+        </Can>
       </header>
 
       <div className="grid gap-3 rounded-xl border border-[var(--border)] bg-white p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">

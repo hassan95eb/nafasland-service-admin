@@ -6,9 +6,10 @@ import { useState, type FormEvent } from "react";
 
 import type { ProductVariant } from "@/features/products/api/get-product";
 import { productQueryKeys } from "@/features/products/api/list-products";
-import { createIdempotencyKey } from "@/features/products/api/update-variant";
+import { createIdempotencyKey } from "@/features/products/lib/idempotency-key";
 import { useProduct, useUpdateVariant } from "@/features/products/hooks/use-product";
 import { updateVariantSchema } from "@/features/products/schemas/update-variant-schema";
+import { SafeProductHtml } from "@/features/products/components/safe-product-html";
 import { ApiError, presentApiError } from "@/shared/lib/api-client";
 import { formatPersianDateTime, formatPrice, formatPersianNumber } from "@/shared/lib/formatters";
 import { Can } from "@/shared/permissions/permission-context";
@@ -42,14 +43,21 @@ export function ProductDetails({ id }: { id: string }) {
       <header className="rounded-xl border border-[var(--border)] bg-white p-5 shadow-sm">
         <h1 className="text-2xl font-black">{product.title || "محصول بدون عنوان"}</h1>
         <p className="mt-2 text-sm text-[var(--muted)]">شناسهٔ محصول: {product.id}</p>
+        <Can permission="catalog.products.write">
+          <Link className="mt-4 inline-flex rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-bold text-white" href={`/products/${encodeURIComponent(product.id)}/edit`}>
+            ویرایش محصول
+          </Link>
+        </Can>
       </header>
+
+      {product.description ? <section className="rounded-xl border border-[var(--border)] bg-white p-5"><SafeProductHtml html={product.description} /></section> : null}
 
       <div className="space-y-4">
         <h2 className="text-lg font-black">قیمت و موجودی واریانت‌ها</h2>
         {product.variants.length === 0 ? (
           <p className="rounded-xl border border-[var(--border)] bg-white p-5 text-sm text-[var(--muted)]">این محصول واریانتی ندارد.</p>
-        ) : product.variants.map((variant) => (
-          <VariantCard key={variant.id} productId={product.id} variant={variant} disabled={product.isStale} />
+        ) : product.variants.map((variant, index) => (
+          <VariantCard key={variant.id ?? `${variant.title}-${index}`} productId={product.id} variant={variant} disabled={product.isStale || !variant.id} />
         ))}
       </div>
     </section>
@@ -73,8 +81,8 @@ function VariantCard({
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-black">{variant.sku || `واریانت ${variant.id}`}</h3>
-            <Badge tone={(variant.stock ?? 0) > 0 ? "success" : "neutral"}>
-              {(variant.stock ?? 0) > 0 ? "موجود" : "ناموجود"}
+            <Badge tone={Number(variant.stock ?? 0) > 0 ? "success" : "neutral"}>
+              {Number(variant.stock ?? 0) > 0 ? "موجود" : "ناموجود"}
             </Badge>
           </div>
           <p className="text-sm">قیمت: {formatPrice(variant.price)}</p>
@@ -116,6 +124,10 @@ function VariantEditor({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(undefined);
+    if (!variant.id) {
+      setError("شناسهٔ واریانت در پاسخ پرتال موجود نیست؛ ذخیره انجام نشد.");
+      return;
+    }
     const data = new FormData(event.currentTarget);
     const parsed = updateVariantSchema.safeParse({
       newPrice: data.get("newPrice"),

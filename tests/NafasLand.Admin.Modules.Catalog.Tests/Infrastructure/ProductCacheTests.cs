@@ -31,8 +31,7 @@ public sealed class ProductCacheTests
     {
         var clock = new MutableTimeProvider(new DateTimeOffset(2026, 9, 20, 10, 0, 0, TimeSpan.Zero));
         var cache = new ProductCache(clock);
-        var detail = new PortalProductDetail(
-            "101", "محصول", null, null, null, null, null, null, [], [], [], [], [], [], [], null, null);
+        var detail = FakePortalProductClient.CreateDetail();
 
         var fresh = await cache.GetDetailAsync("101", _ => Task.FromResult<PortalProductDetail?>(detail), CancellationToken.None);
         clock.Advance(TimeSpan.FromMinutes(2));

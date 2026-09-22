@@ -10,10 +10,6 @@ export interface UpdateVariantInput {
   request: UpdateVariantRequest;
 }
 
-export function createIdempotencyKey(randomUuid: () => string = () => crypto.randomUUID()) {
-  return randomUuid();
-}
-
 export function updateVariant({ variantId, idempotencyKey, request }: UpdateVariantInput) {
   return apiFetch<UpdateVariantResult>(
     `/api/v1/catalog/products/variants/${encodeURIComponent(variantId)}`,

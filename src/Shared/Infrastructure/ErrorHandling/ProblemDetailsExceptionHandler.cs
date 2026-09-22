@@ -64,6 +64,18 @@ internal sealed class ProblemDetailsExceptionHandler(ILogger<ProblemDetailsExcep
                 Title = "تداخل با وضعیت فعلی",
                 Detail = conflict.Message,
             },
+            ResourceNotFoundException notFound => new ProblemDetails
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "منبع پیدا نشد",
+                Detail = notFound.Message,
+            },
+            BusinessRuleException businessRule => new ProblemDetails
+            {
+                Status = StatusCodes.Status422UnprocessableEntity,
+                Title = "عملیات مجاز نیست",
+                Detail = businessRule.Message,
+            },
             AntiforgeryValidationFailedException antiforgeryFailed => new ProblemDetails
             {
                 Status = StatusCodes.Status400BadRequest,

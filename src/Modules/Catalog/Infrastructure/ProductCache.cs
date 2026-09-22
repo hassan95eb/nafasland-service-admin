@@ -38,6 +38,14 @@ internal sealed class ProductCache(TimeProvider timeProvider)
             cancellationToken);
     }
 
+    public void InvalidateProduct(string externalProductId)
+    {
+        _details.TryRemove(externalProductId, out _);
+        _lists.Clear();
+    }
+
+    public void InvalidateLists() => _lists.Clear();
+
     private async Task<TValue> GetOrRefreshAsync<TKey, TValue>(
         TKey key,
         ConcurrentDictionary<TKey, CacheEntry<TValue>> entries,

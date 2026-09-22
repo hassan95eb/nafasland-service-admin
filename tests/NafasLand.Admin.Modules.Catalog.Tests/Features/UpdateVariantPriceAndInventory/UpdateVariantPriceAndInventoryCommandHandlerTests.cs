@@ -55,7 +55,9 @@ public sealed class UpdateVariantPriceAndInventoryCommandHandlerTests
     {
         var portal = new FakePortalProductClient
         {
-            VariantResult = new PortalProductVariant("variant-1", "another-product", null, 100_000, null, 4, null, null),
+            VariantResult = new PortalProductVariant(
+                "variant-1", "another-product", "primary", 100_000, null, null, null, null, null, null, null,
+                4, null, null, null, null, "commodity", [], []),
         };
         var handler = CreateHandler(portal, new CapturingAuditContext());
 

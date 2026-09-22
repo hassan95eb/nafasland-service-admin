@@ -20,4 +20,17 @@ public interface IPortalProductClient
         string externalVariantId,
         PortalVariantPatch patch,
         CancellationToken cancellationToken);
+
+    Task<PortalProductCreateResult> CreateProductAsync(
+        PortalProductWriteModel product,
+        CancellationToken cancellationToken);
+
+    Task<PortalProductUpdateResult> UpdateProductAsync(
+        string externalProductId,
+        PortalProductWriteModel product,
+        CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<PortalCategoryNode>> ListCategoriesAsync(CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<PortalFilterGroup>> ListFiltersAsync(CancellationToken cancellationToken);
 }

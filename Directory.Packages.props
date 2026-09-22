@@ -30,6 +30,9 @@
     <!-- Portal HTTP resilience (ADR-050, step 3) -->
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.10.0" />
 
+    <!-- Product HTML sanitization (ADR-033, step 7) -->
+    <PackageVersion Include="HtmlSanitizer" Version="9.2.1039" />
+
     <!-- OpenAPI document generation for frontend types (ADR-051, step 4) -->
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
 

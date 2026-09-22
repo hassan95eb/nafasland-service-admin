@@ -42,4 +42,6 @@ public sealed class PortalOptions
 
     [Required(AllowEmptyStrings = false, ErrorMessage = "شناسهٔ محصول تستی تعریف نشده است (ADR-029).")]
     public string TestProductId { get; init; } = string.Empty;
+
+    public bool AllowProductCreation { get; init; }
 }

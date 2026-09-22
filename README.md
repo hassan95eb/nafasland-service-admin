@@ -1,8 +1,8 @@
 # NafasLand Admin
 
 پنل مدیریت مستقل برای کارکنان نفس‌لند، روی API پرتال. فرانت فارسی و RTL از
-پشت reverse proxy به API متصل می‌شود و فهرست صفحه‌بندی‌شدهٔ محصولات را به‌صورت
-فقط‌خواندنی نمایش می‌دهد. برای تصمیم‌های معماری به `DECISIONS.md` و برای ترتیب
+پشت reverse proxy به API متصل می‌شود و محصولات را با حفظ قرارداد پرتال نمایش
+و ویرایش می‌کند. برای تصمیم‌های معماری به `DECISIONS.md` و برای ترتیب
 کار به `ROADMAP.md` مراجعه کن.
 
 ## پیش‌نیازها
@@ -27,6 +27,8 @@ cd src/Api
 dotnet user-secrets set "Database:ConnectionString" "Server=localhost;Database=NafasLandAdmin;User Id=sa;Password=<رمز>;TrustServerCertificate=True;"
 dotnet user-secrets set "Portal:BearerToken" "<توکن سرویس‌اکانت پرتال>"
 dotnet user-secrets set "Portal:TestProductId" "<شناسهٔ محصول تستی>"
+# فقط برای محیطی که ایجاد واقعی محصول در آن صریحاً مجاز است:
+dotnet user-secrets set "Portal:AllowProductCreation" "true"
 dotnet user-secrets set "Identity:SuperAdmin:Username" "superadmin"
 dotnet user-secrets set "Identity:SuperAdmin:Password" "<رمز اولیهٔ قوی>"
 ```
@@ -303,6 +305,27 @@ curl -s "http://localhost:8080/api/v1/catalog/products/<Portal:TestProductId>" \
 می‌فرستد. اثر واقعی `page`، `size`، `keywords` و `sorting` باید با توکن واقعی
 به‌صورت دستی تأیید شود؛ تست‌های خودکار فقط از fake استفاده می‌کنند.
 
+## ایجاد و ویرایش محصول (گام ۷)
+
+دارندهٔ `catalog.products.write` به مسیرهای `/products/new` و
+`/products/{id}/edit` دسترسی دارد. قراردادهای داخلی:
+
+| Method و مسیر | رفتار |
+| --- | --- |
+| `POST /api/v1/catalog/products` | ایجاد محصول؛ هدر GUID به نام `Idempotency-Key` اجباری است |
+| `PUT /api/v1/catalog/products/{productId}` | خواندن زنده، مقایسهٔ `LastKnownVersion` و سپس PUT کامل |
+
+`Portal:AllowProductCreation` به‌صورت پیش‌فرض `false` است. ایجاد واقعی فقط وقتی
+انجام می‌شود که این گزینه در کانفیگ همان محیط صریحاً `true` باشد. تکرار همان
+فرم ایجاد با همان `Idempotency-Key` پاسخ قبلی را برمی‌گرداند و محصول دیگری
+نمی‌سازد.
+
+اختلاف نسخه با `409 Conflict` پاسخ داده می‌شود و هیچ PUTای به پرتال نمی‌رود.
+تصاویر محصول موجود عیناً حفظ می‌شوند؛ ایجاد محصول با `image/images = null`
+است و در این مرحله آپلود، حذف، تغییر ترتیب یا جایگزینی تصویر وجود ندارد.
+قیمت و موجودی محصول موجود نیز در فرم محصول تغییر نمی‌کنند و فقط از endpoint
+`PATCH /api/v1/catalog/products/variants/{variantId}` به‌روزرسانی می‌شوند.
+
 ## متغیرهای محیطی (`.env`)
 
 کلیدها در `.env.example` مستندند؛ هیچ مقدار واقعی در گیت نیست (ADR-039).
@@ -314,6 +337,7 @@ curl -s "http://localhost:8080/api/v1/catalog/products/<Portal:TestProductId>" \
 | `PORTAL__BASEURL` | آدرس پایهٔ API مدیریتی پرتال |
 | `PORTAL__BEARERTOKEN` | توکن سرویس‌اکانت؛ فقط در بک‌اند نگهداری می‌شود و نباید لاگ شود |
 | `PORTAL__TESTPRODUCTID` | شناسهٔ محصول تستی برای آزمایش دستی خواندن |
+| `PORTAL__ALLOWPRODUCTCREATION` | محافظ ایجاد واقعی محصول؛ پیش‌فرض `false` و برای فعال‌سازی باید صریحاً `true` شود |
 | `PORTAL__RATELIMITPERSECOND` | نرخ هدف سراسری؛ پیش‌فرض ۱.۵ درخواست در ثانیه |
 | `PORTAL__RATELIMITQUEUECAPACITY` | ظرفیت صف درخواست‌های پرتال؛ پیش‌فرض ۲۰ |
 | `PORTAL__RATELIMITQUEUETIMEOUTSECONDS` | بیشینهٔ انتظار در صف؛ پیش‌فرض ۱۵ ثانیه |

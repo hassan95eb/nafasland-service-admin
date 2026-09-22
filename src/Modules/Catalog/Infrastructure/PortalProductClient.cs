@@ -24,6 +24,11 @@ internal sealed class PortalProductClient(
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
+    private static readonly JsonSerializerOptions ProductSerializerOptions = new(JsonSerializerDefaults.Web)
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+    };
+
     public async Task<PortalProductListResult> ListProductsAsync(
         PortalProductListQuery query,
         CancellationToken cancellationToken)
@@ -120,6 +125,79 @@ internal sealed class PortalProductClient(
             cancellationToken);
         var json = await response.Content.ReadAsStringAsync(cancellationToken);
         EnsureSuccessfulPortalResponse(response, json);
+    }
+
+    public async Task<PortalProductCreateResult> CreateProductAsync(
+        PortalProductWriteModel product,
+        CancellationToken cancellationToken)
+    {
+        using var content = JsonContent.Create(product, options: ProductSerializerOptions);
+        using var response = await SendAsync(HttpMethod.Post, "store/products", content, cancellationToken);
+        var json = await response.Content.ReadAsStringAsync(cancellationToken);
+        EnsureSuccessfulPortalResponse(response, json);
+
+        try
+        {
+            return PortalProductMapper.MapCreateResult(json);
+        }
+        catch (JsonException exception)
+        {
+            throw new PortalUnavailableException(exception);
+        }
+    }
+
+    public async Task<PortalProductUpdateResult> UpdateProductAsync(
+        string externalProductId,
+        PortalProductWriteModel product,
+        CancellationToken cancellationToken)
+    {
+        using var content = JsonContent.Create(product, options: ProductSerializerOptions);
+        using var response = await SendAsync(
+            HttpMethod.Put,
+            $"store/products/{Uri.EscapeDataString(externalProductId)}",
+            content,
+            cancellationToken);
+        var json = await response.Content.ReadAsStringAsync(cancellationToken);
+        EnsureSuccessfulPortalResponse(response, json);
+
+        try
+        {
+            return PortalProductMapper.MapUpdateResult(json);
+        }
+        catch (JsonException exception)
+        {
+            throw new PortalUnavailableException(exception);
+        }
+    }
+
+    public async Task<IReadOnlyList<PortalCategoryNode>> ListCategoriesAsync(CancellationToken cancellationToken)
+    {
+        using var response = await SendAsync(HttpMethod.Get, "../pages", null, cancellationToken);
+        var json = await response.Content.ReadAsStringAsync(cancellationToken);
+        EnsureSuccessfulPortalResponse(response, json);
+        try
+        {
+            return PortalProductMapper.MapCategories(json);
+        }
+        catch (JsonException exception)
+        {
+            throw new PortalUnavailableException(exception);
+        }
+    }
+
+    public async Task<IReadOnlyList<PortalFilterGroup>> ListFiltersAsync(CancellationToken cancellationToken)
+    {
+        using var response = await SendAsync(HttpMethod.Get, "../store/filters?relation=", null, cancellationToken);
+        var json = await response.Content.ReadAsStringAsync(cancellationToken);
+        EnsureSuccessfulPortalResponse(response, json);
+        try
+        {
+            return PortalProductMapper.MapFilters(json);
+        }
+        catch (JsonException exception)
+        {
+            throw new PortalUnavailableException(exception);
+        }
     }
 
     private async Task<HttpResponseMessage> SendAsync(

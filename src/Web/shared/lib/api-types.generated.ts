@@ -549,338 +549,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/sample/ping": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["PingRequest"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/sample/unprotected-ping": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/audit/logs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    actorUserId?: string;
-                    from?: string;
-                    to?: string;
-                    action?: string;
-                    entityType?: string;
-                    outcome?: components["schemas"]["AuditOutcome"];
-                    cursor?: string;
-                    pageSize?: number | string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/audit/logs/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/audit/users/{userId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    from?: string;
-                    to?: string;
-                    cursor?: string;
-                    pageSize?: number | string;
-                };
-                header?: never;
-                path: {
-                    userId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/audit/products/{externalProductId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    cursor?: string;
-                    pageSize?: number | string;
-                };
-                header?: never;
-                path: {
-                    externalProductId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/audit/export/{jobId}/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    jobId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/audit/export/{jobId}/download": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    jobId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/audit/export": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["ExportAuditLogRequest"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/catalog/products": {
         parameters: {
             query?: never;
@@ -923,7 +591,30 @@ export interface paths {
             };
         };
         put?: never;
-        post?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateProductRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CreateProductResult"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -953,7 +644,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["PortalProductDetail"];
+                    };
                 };
             };
         };
@@ -965,14 +658,214 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/catalog/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PortalTaxonomyResultOfPortalCategoryNode"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalog/filters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PortalTaxonomyResultOfPortalFilterGroup"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalog/products/{productId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    productId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateProductRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UpdateProductResult"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalog/products/variants/{variantId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    variantId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateVariantPriceAndInventoryRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UpdateVariantPriceAndInventoryResult"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        AuditOutcome: number;
         ChangePasswordRequest: {
             currentPassword: string;
             newPassword: string;
+        };
+        CreateProductRequest: {
+            title: string;
+            caption: null | string;
+            description: null | string;
+            contents: components["schemas"]["PortalNameValue"][];
+            commentingEnabled: boolean;
+            fields: components["schemas"]["PortalNameValue"][];
+            slug: null | string;
+            metaTitle: null | string;
+            metaDescription: null | string;
+            metaKeywords: null | string;
+            metaRobots: null | string;
+            redirect: null | string;
+            categoryIds: (number | string)[];
+            filterIds: (number | string)[];
+            attributes: components["schemas"]["PortalAttribute"][];
+            variants: components["schemas"]["CreateProductVariantInput"][];
+        };
+        CreateProductResult: {
+            id: string;
+            version: null | string;
+            title: null | string;
+        };
+        CreateProductVariantInput: {
+            title: string;
+            /** Format: double */
+            price: null | number | string;
+            /** Format: double */
+            comparePrice: null | number | string;
+            /** Format: double */
+            tax: null | number | string;
+            /** Format: double */
+            shipping: null | number | string;
+            /** Format: double */
+            weight: null | number | string;
+            /** Format: double */
+            length: null | number | string;
+            /** Format: double */
+            width: null | number | string;
+            /** Format: double */
+            height: null | number | string;
+            /** Format: int32 */
+            stock: null | number | string;
+            /** Format: int32 */
+            minimum: null | number | string;
+            /** Format: int32 */
+            maximum: null | number | string;
+            sku: null | string;
         };
         CreateUserRequest: {
             username: string;
@@ -986,18 +879,6 @@ export interface components {
         DirectPermissionResponse: {
             key: string;
             effect: string;
-        };
-        ExportAuditLogRequest: {
-            /** Format: uuid */
-            actorUserId: null | string;
-            /** Format: date-time */
-            from: null | string;
-            /** Format: date-time */
-            to: null | string;
-            action: null | string;
-            entityType: null | string;
-            outcome: null | components["schemas"]["AuditOutcome"];
-            format: string;
         };
         HttpValidationProblemDetails: {
             type?: null | string;
@@ -1036,8 +917,68 @@ export interface components {
             moduleName: string;
             isSuperAdminOnly: boolean;
         };
-        PingRequest: {
-            message: string;
+        PortalAttribute: {
+            name: string;
+            value: string[];
+        };
+        PortalCategoryNode: {
+            id: string;
+            title: null | string;
+            type: null | string;
+            children: components["schemas"]["PortalCategoryNode"][];
+        };
+        PortalFilterGroup: {
+            id: string;
+            title: null | string;
+            /** Format: int32 */
+            weight: null | number | string;
+            values: components["schemas"]["PortalTaxonomyValue"][];
+        };
+        PortalNameValue: {
+            name: string;
+            value: null | string;
+        };
+        PortalProductDetail: {
+            id: string;
+            title: null | string;
+            caption: null | string;
+            slug: null | string;
+            url: null | string;
+            description: null | string;
+            contents: components["schemas"]["PortalNameValue"][];
+            commentingEnabled: boolean;
+            fields: components["schemas"]["PortalNameValue"][];
+            attributes: components["schemas"]["PortalAttribute"][];
+            /** Format: double */
+            price: null | number | string;
+            /** Format: date-time */
+            publishedAtUtc: null | string;
+            /** Format: date-time */
+            createdAtUtc: null | string;
+            statuses: string[];
+            categories: components["schemas"]["PortalTaxonomyValue"][];
+            filters: components["schemas"]["PortalTaxonomyValue"][];
+            image: null | string;
+            images: components["schemas"]["PortalProductImage"][];
+            variants: components["schemas"]["PortalProductVariant"][];
+            relates: (number | string)[];
+            metaTitle: null | string;
+            metaDescription: null | string;
+            metaKeywords: null | string;
+            metaRobots: null | string;
+            redirect: null | string;
+            canonicalUrl: null | string;
+            version: null | string;
+            /** @default false */
+            isStale: boolean;
+            /** Format: date-time */
+            asOfUtc?: null | string;
+            isPending?: boolean;
+            isAvailable?: boolean;
+        };
+        PortalProductImage: {
+            path: string;
+            title: null | string;
         };
         PortalProductListResult: {
             items: components["schemas"]["PortalProductSummary"][];
@@ -1049,6 +990,10 @@ export interface components {
             page: number | string;
             /** Format: int32 */
             pageSize: number | string;
+            /** @default false */
+            isStale: boolean;
+            /** Format: date-time */
+            asOfUtc?: null | string;
         };
         PortalProductSummary: {
             id: string;
@@ -1062,6 +1007,59 @@ export interface components {
             statuses: string[];
             isPending?: boolean;
             isAvailable?: boolean;
+        };
+        PortalProductVariant: {
+            id: null | string;
+            productId: null | string;
+            title: null | string;
+            /** Format: double */
+            price: null | number | string;
+            /** Format: double */
+            comparePrice: null | number | string;
+            /** Format: double */
+            tax: null | number | string;
+            /** Format: double */
+            shipping: null | number | string;
+            /** Format: double */
+            weight: null | number | string;
+            /** Format: double */
+            length: null | number | string;
+            /** Format: double */
+            width: null | number | string;
+            /** Format: double */
+            height: null | number | string;
+            /** Format: int32 */
+            stock: null | number | string;
+            /** Format: int32 */
+            minimum: null | number | string;
+            /** Format: int32 */
+            maximum: null | number | string;
+            sku: null | string;
+            image: null | string;
+            type: null | string;
+            status: string[];
+            files: string[];
+        };
+        PortalTaxonomyResultOfPortalCategoryNode: {
+            items: components["schemas"]["PortalCategoryNode"][];
+            /** @default false */
+            isStale: boolean;
+            /** Format: date-time */
+            asOfUtc?: null | string;
+        };
+        PortalTaxonomyResultOfPortalFilterGroup: {
+            items: components["schemas"]["PortalFilterGroup"][];
+            /** @default false */
+            isStale: boolean;
+            /** Format: date-time */
+            asOfUtc?: null | string;
+        };
+        PortalTaxonomyValue: {
+            id: string;
+            title: null | string;
+            url: null | string;
+            /** Format: int32 */
+            weight: null | number | string;
         };
         ResetPasswordRequest: {
             newPassword: string;
@@ -1090,6 +1088,51 @@ export interface components {
         };
         ToggleUserActiveResult: {
             isActive: boolean;
+        };
+        UpdateProductContentInput: {
+            name: string;
+            value: null | string;
+            isDirty: boolean;
+        };
+        UpdateProductRequest: {
+            lastKnownVersion: string;
+            title: string;
+            caption: null | string;
+            description: null | string;
+            descriptionDirty: boolean;
+            contents: components["schemas"]["UpdateProductContentInput"][];
+            commentingEnabled: boolean;
+            fields: components["schemas"]["PortalNameValue"][];
+            slug: null | string;
+            metaTitle: null | string;
+            metaDescription: null | string;
+            metaKeywords: null | string;
+            metaRobots: null | string;
+            redirect: null | string;
+            categoryIds: (number | string)[];
+            filterIds: (number | string)[];
+        };
+        UpdateProductResult: {
+            id: string;
+            version: null | string;
+            title: null | string;
+        };
+        UpdateVariantPriceAndInventoryRequest: {
+            /** Format: double */
+            newPrice: number | string;
+            /** Format: int32 */
+            newStock: number | string;
+            /** Format: double */
+            lastKnownPrice: null | number | string;
+            /** Format: int32 */
+            lastKnownStock: null | number | string;
+        };
+        UpdateVariantPriceAndInventoryResult: {
+            variantId: string;
+            /** Format: double */
+            price: number | string;
+            /** Format: int32 */
+            stock: number | string;
         };
         UserDetailsResponse: {
             /** Format: uuid */
