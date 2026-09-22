@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { normalizeNumericInput } from "@/shared/lib/normalize-number";
+import { normalizeNumericInput } from "../../../shared/lib/normalize-number.ts";
 
 const normalizedNumber = z.preprocess(normalizeNumericInput, z.coerce.number());
 

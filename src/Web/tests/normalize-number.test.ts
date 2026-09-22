@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createIdempotencyKey } from "../features/products/api/update-variant.ts";
+import { createIdempotencyKey } from "../features/products/lib/idempotency-key.ts";
 import { updateVariantSchema } from "../features/products/schemas/update-variant-schema.ts";
 import { normalizeNumericInput } from "../shared/lib/normalize-number.ts";
 

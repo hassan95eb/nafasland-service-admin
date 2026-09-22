@@ -19,6 +19,7 @@
     <InternalsVisibleTo Include="NafasLand.Admin.Shared.Kernel.Tests" />
     <InternalsVisibleTo Include="NafasLand.Admin.Modules.Sample.Tests" />
     <InternalsVisibleTo Include="NafasLand.Admin.Modules.Auditing.Tests" />
+    <InternalsVisibleTo Include="NafasLand.Admin.Modules.Catalog.Tests" />
   </ItemGroup>
 
 </Project>

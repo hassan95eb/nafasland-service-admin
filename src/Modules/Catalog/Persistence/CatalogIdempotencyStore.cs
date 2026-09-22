@@ -20,7 +20,13 @@ internal sealed class CatalogIdempotencyStore(CatalogDbContext dbContext) : IIde
             await dbContext.SaveChangesAsync(cancellationToken);
             return new IdempotencyBeginResult(IdempotencyBeginOutcome.Started);
         }
-        catch (DbUpdateException)
+        catch (Exception exception) when (
+            exception is DbUpdateException ||
+            exception is ArgumentException &&
+            string.Equals(
+                dbContext.Database.ProviderName,
+                "Microsoft.EntityFrameworkCore.InMemory",
+                StringComparison.Ordinal))
         {
             dbContext.Entry(candidate).State = EntityState.Detached;
             var existing = await dbContext.IdempotencyRecords

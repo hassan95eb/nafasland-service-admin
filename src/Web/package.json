@@ -12,6 +12,13 @@
   },
   "dependencies": {
     "@tanstack/react-query": "5.103.1",
+    "@tiptap/extension-image": "3.31.3",
+    "@tiptap/extension-table": "3.31.3",
+    "@tiptap/extension-text-align": "3.31.3",
+    "@tiptap/pm": "3.31.3",
+    "@tiptap/react": "3.31.3",
+    "@tiptap/starter-kit": "3.31.3",
+    "dompurify": "3.4.15",
     "next": "16.3.5",
     "react": "19.3.0",
     "react-dom": "19.3.0",

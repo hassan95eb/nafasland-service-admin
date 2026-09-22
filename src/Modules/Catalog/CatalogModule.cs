@@ -3,10 +3,13 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using NafasLand.Admin.Modules.Catalog.Contracts;
 using NafasLand.Admin.Modules.Catalog.Contracts.Configuration;
 using NafasLand.Admin.Modules.Catalog.Features.Queries;
+using NafasLand.Admin.Modules.Catalog.Features.CreateProduct;
+using NafasLand.Admin.Modules.Catalog.Features.UpdateProduct;
 using NafasLand.Admin.Modules.Catalog.Features.UpdateVariantPriceAndInventory;
 using NafasLand.Admin.Modules.Catalog.Infrastructure;
 using NafasLand.Admin.Modules.Catalog.Jobs;
@@ -49,12 +52,18 @@ internal sealed class CatalogModule : IModule
         services.AddSingleton<PortalRateLimiter>();
         services.AddTransient<PortalRateLimitingHandler>();
         services.AddSingleton<ProductCache>();
+        services.AddSingleton<TaxonomyCache>();
+        services.AddScoped<IProductHtmlSanitizer, ProductHtmlSanitizer>();
         services.AddSingleton<IPortalTokenProvider, PortalTokenProvider>();
         services.AddScoped<IdempotencyPurgeJob>();
         services.AddScoped<ICatalogBootstrapper, CatalogBootstrapper>();
         services.AddScoped<IValidator<UpdateVariantPriceAndInventoryCommand>, UpdateVariantPriceAndInventoryCommandValidator>();
         services.AddScoped<ICommandHandler<UpdateVariantPriceAndInventoryCommand, UpdateVariantPriceAndInventoryResult>,
             UpdateVariantPriceAndInventoryCommandHandler>();
+        services.AddScoped<IValidator<CreateProductCommand>, CreateProductCommandValidator>();
+        services.AddScoped<ICommandHandler<CreateProductCommand, CreateProductResult>, CreateProductCommandHandler>();
+        services.AddScoped<IValidator<UpdateProductCommand>, UpdateProductCommandValidator>();
+        services.AddScoped<ICommandHandler<UpdateProductCommand, UpdateProductResult>, UpdateProductCommandHandler>();
 
         var httpClient = services.AddHttpClient<IPortalProductClient, PortalProductClient>((serviceProvider, client) =>
         {
@@ -66,15 +75,19 @@ internal sealed class CatalogModule : IModule
 
         httpClient.AddResilienceHandler("portal-read", pipeline =>
         {
+            var retryOptions = new Microsoft.Extensions.Http.Resilience.HttpRetryStrategyOptions
+            {
+                MaxRetryAttempts = portalOptions.RetryMaxAttempts,
+                Delay = TimeSpan.FromSeconds(portalOptions.RetryBaseDelaySeconds),
+                BackoffType = DelayBackoffType.Exponential,
+                UseJitter = true,
+                ShouldRetryAfterHeader = true,
+            };
+            // POST محصول نباید در لایهٔ HTTP تکرار شود؛ idempotency پنل نمی‌تواند
+            // دو تلاش داخلی یک فراخوانی را در پرتالِ فاقد idempotency key تشخیص دهد.
+            retryOptions.DisableForUnsafeHttpMethods();
             pipeline
-                .AddRetry(new Microsoft.Extensions.Http.Resilience.HttpRetryStrategyOptions
-                {
-                    MaxRetryAttempts = portalOptions.RetryMaxAttempts,
-                    Delay = TimeSpan.FromSeconds(portalOptions.RetryBaseDelaySeconds),
-                    BackoffType = DelayBackoffType.Exponential,
-                    UseJitter = true,
-                    ShouldRetryAfterHeader = true,
-                })
+                .AddRetry(retryOptions)
                 .AddCircuitBreaker(new Microsoft.Extensions.Http.Resilience.HttpCircuitBreakerStrategyOptions
                 {
                     FailureRatio = 0.5,
@@ -94,12 +107,15 @@ internal sealed class CatalogModule : IModule
     {
         ListProductsEndpoint.Map(app);
         GetProductEndpoint.Map(app);
+        GetProductTaxonomyEndpoints.Map(app);
+        CreateProductEndpoint.Map(app);
+        UpdateProductEndpoint.Map(app);
         UpdateVariantPriceAndInventoryEndpoint.Map(app);
     }
 
     public IReadOnlyList<PermissionDefinition> Permissions { get; } =
     [
         new PermissionDefinition(CatalogPermissions.ProductsRead, "مشاهدهٔ محصولات"),
-        new PermissionDefinition(CatalogPermissions.ProductsWrite, "ویرایش قیمت و موجودی محصولات"),
+        new PermissionDefinition(CatalogPermissions.ProductsWrite, "ایجاد و ویرایش محصولات"),
     ];
 }

@@ -28,9 +28,15 @@ public sealed class PortalOptionsTests
     [Fact]
     public void permission_خواندن_برای_سوپرادمین_رزرو_نشده_است()
     {
-        var permission = Assert.Single(new CatalogModule().Permissions);
+        var permission = Assert.Single(new CatalogModule().Permissions, value => value.Key == "catalog.products.read");
 
         Assert.Equal("catalog.products.read", permission.Key);
         Assert.False(permission.IsSuperAdminOnly);
+    }
+
+    [Fact]
+    public void ایجاد_محصول_به_صورت_پیش‌فرض_غیرفعال_است()
+    {
+        Assert.False(new PortalOptions().AllowProductCreation);
     }
 }

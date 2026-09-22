@@ -14,6 +14,8 @@ export const productQueryKeys = {
   all: ["products"] as const,
   list: (params: ProductListParams) => [...productQueryKeys.all, "list", params] as const,
   detail: (id: string) => [...productQueryKeys.all, "detail", id] as const,
+  categories: () => [...productQueryKeys.all, "categories"] as const,
+  filters: () => [...productQueryKeys.all, "filters"] as const,
 };
 
 export function listProducts(params: ProductListParams) {
