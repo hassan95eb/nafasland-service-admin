@@ -15,3 +15,17 @@ export async function requirePermission(permission: string) {
   }
   return user;
 }
+
+/**
+ * The frontend counterpart of the backend's IRequiresAuthenticatedUser marker:
+ * signed in, no specific permission required. Used by pages like "my approval
+ * requests" (ADR-010's "approval.read.own", available to every role) where
+ * requirePermission's own permission check would have nothing to check against.
+ */
+export async function requireAuthenticatedUser() {
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
+  return user;
+}

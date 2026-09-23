@@ -11,6 +11,8 @@ internal sealed class FakePortalProductClient : IPortalProductClient
     public int UpdateVariantCallCount { get; private set; }
     public int CreateProductCallCount { get; private set; }
     public int UpdateProductCallCount { get; private set; }
+    public int DeleteProductCallCount { get; private set; }
+    public string? LastDeletedProductId { get; private set; }
     public TimeSpan Delay { get; init; }
 
     public PortalProductListResult ListResult { get; init; } = new(
@@ -95,6 +97,17 @@ internal sealed class FakePortalProductClient : IPortalProductClient
             Version = "2",
         };
         return new PortalProductUpdateResult("2");
+    }
+
+    public async Task DeleteProductAsync(string externalProductId, CancellationToken cancellationToken)
+    {
+        DeleteProductCallCount++;
+        LastDeletedProductId = externalProductId;
+        await WaitAsync(cancellationToken);
+        if (DetailResult?.Id == externalProductId)
+        {
+            DetailResult = null;
+        }
     }
 
     public Task<IReadOnlyList<PortalCategoryNode>> ListCategoriesAsync(CancellationToken cancellationToken) =>

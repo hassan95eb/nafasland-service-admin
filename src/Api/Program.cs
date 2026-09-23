@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using NafasLand.Admin.Api.Authentication;
 using NafasLand.Admin.Api.Configuration;
 using NafasLand.Admin.Api.HealthChecks;
+using NafasLand.Admin.Modules.Approvals.Contracts;
 using NafasLand.Admin.Modules.Auditing.Contracts;
 using NafasLand.Admin.Modules.Catalog.Contracts.Configuration;
 using NafasLand.Admin.Modules.Catalog.Contracts;
@@ -216,6 +217,7 @@ await using (var scope = app.Services.CreateAsyncScope())
 {
     scope.ServiceProvider.GetService<IAuditingBootstrapper>()?.ScheduleRecurringJobs();
     scope.ServiceProvider.GetService<ICatalogBootstrapper>()?.ScheduleRecurringJobs();
+    scope.ServiceProvider.GetService<IApprovalsBootstrapper>()?.ScheduleRecurringJobs();
 }
 
 app.UseExceptionHandler();

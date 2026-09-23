@@ -37,6 +37,13 @@
     <ProjectReference Include="..\Modules\Auditing\NafasLand.Admin.Modules.Auditing.csproj" />
     <!-- Catalog contracts provide PortalOptions; the assembly is also discovered as a module. -->
     <ProjectReference Include="..\Modules\Catalog\NafasLand.Admin.Modules.Catalog.csproj" />
+    <!--
+      Referenced for both reasons, same as Auditing/Catalog: assembly discovery
+      (ADR-005) AND Program.cs calls IApprovalsBootstrapper.ScheduleRecurringJobs()
+      directly (see IApprovalsBootstrapper's own comment for why that call cannot
+      live inside ApprovalsModule.RegisterServices).
+    -->
+    <ProjectReference Include="..\Modules\Approvals\NafasLand.Admin.Modules.Approvals.csproj" />
   </ItemGroup>
 
 </Project>

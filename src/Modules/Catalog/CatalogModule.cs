@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
+using NafasLand.Admin.Modules.Catalog.Approvals;
 using NafasLand.Admin.Modules.Catalog.Contracts;
 using NafasLand.Admin.Modules.Catalog.Contracts.Configuration;
 using NafasLand.Admin.Modules.Catalog.Features.Queries;
@@ -16,6 +17,7 @@ using NafasLand.Admin.Modules.Catalog.Jobs;
 using NafasLand.Admin.Modules.Catalog.Persistence;
 using NafasLand.Admin.Shared.Infrastructure.Configuration;
 using NafasLand.Admin.Shared.Infrastructure.Persistence;
+using NafasLand.Admin.Shared.Kernel.Approvals;
 using NafasLand.Admin.Shared.Kernel.Idempotency;
 using NafasLand.Admin.Shared.Kernel.Messaging;
 using NafasLand.Admin.Shared.Kernel.Modules;
@@ -64,6 +66,14 @@ internal sealed class CatalogModule : IModule
         services.AddScoped<ICommandHandler<CreateProductCommand, CreateProductResult>, CreateProductCommandHandler>();
         services.AddScoped<IValidator<UpdateProductCommand>, UpdateProductCommandValidator>();
         services.AddScoped<ICommandHandler<UpdateProductCommand, UpdateProductResult>, UpdateProductCommandHandler>();
+
+        // Approvals executors (ADR-010/030/031/032): registered keyed by their own
+        // RequestType, resolved by the Approvals module without either module
+        // referencing the other (ADR-004) — see IApprovalExecutor's own comment.
+        services.AddKeyedScoped<IApprovalExecutor, DeleteProductApprovalExecutor>(DeleteProductApprovalExecutor.RequestTypeKey);
+        services.AddKeyedScoped<IApprovalExecutor, PublishProductApprovalExecutor>(PublishProductApprovalExecutor.RequestTypeKey);
+        services.AddKeyedScoped<IApprovalExecutor, ProductStatusApprovalExecutor>(ProductStatusApprovalExecutor.RequestTypeKey);
+        services.AddKeyedScoped<IApprovalExecutor, DeleteVariantApprovalExecutor>(DeleteVariantApprovalExecutor.RequestTypeKey);
 
         var httpClient = services.AddHttpClient<IPortalProductClient, PortalProductClient>((serviceProvider, client) =>
         {
@@ -117,5 +127,13 @@ internal sealed class CatalogModule : IModule
     [
         new PermissionDefinition(CatalogPermissions.ProductsRead, "مشاهدهٔ محصولات"),
         new PermissionDefinition(CatalogPermissions.ProductsWrite, "ایجاد و ویرایش محصولات"),
+        new PermissionDefinition(CatalogPermissions.ProductsDeleteRequest, "درخواست حذف محصول"),
+        new PermissionDefinition(CatalogPermissions.ProductsDelete, "تأیید حذف محصول", IsSuperAdminOnly: true),
+        new PermissionDefinition(CatalogPermissions.ProductsPublishRequest, "درخواست انتشار یا لغو انتشار محصول"),
+        new PermissionDefinition(CatalogPermissions.ProductsPublish, "تأیید انتشار یا لغو انتشار محصول", IsSuperAdminOnly: true),
+        new PermissionDefinition(CatalogPermissions.ProductsStatusRequest, "درخواست تغییر ویژه/پرفروش‌ترین"),
+        new PermissionDefinition(CatalogPermissions.ProductsStatus, "تأیید تغییر ویژه/پرفروش‌ترین", IsSuperAdminOnly: true),
+        new PermissionDefinition(CatalogPermissions.VariantsDeleteRequest, "درخواست حذف واریانت"),
+        new PermissionDefinition(CatalogPermissions.VariantsDelete, "تأیید حذف واریانت", IsSuperAdminOnly: true),
     ];
 }

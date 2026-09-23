@@ -170,6 +170,17 @@ internal sealed class PortalProductClient(
         }
     }
 
+    public async Task DeleteProductAsync(string externalProductId, CancellationToken cancellationToken)
+    {
+        using var response = await SendAsync(
+            HttpMethod.Delete,
+            $"store/products/{Uri.EscapeDataString(externalProductId)}",
+            null,
+            cancellationToken);
+        var json = await response.Content.ReadAsStringAsync(cancellationToken);
+        EnsureSuccessfulPortalResponse(response, json);
+    }
+
     public async Task<IReadOnlyList<PortalCategoryNode>> ListCategoriesAsync(CancellationToken cancellationToken)
     {
         using var response = await SendAsync(HttpMethod.Get, "../pages", null, cancellationToken);
