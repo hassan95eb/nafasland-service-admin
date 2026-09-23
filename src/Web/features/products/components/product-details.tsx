@@ -10,6 +10,9 @@ import { createIdempotencyKey } from "@/features/products/lib/idempotency-key";
 import { useProduct, useUpdateVariant } from "@/features/products/hooks/use-product";
 import { updateVariantSchema } from "@/features/products/schemas/update-variant-schema";
 import { SafeProductHtml } from "@/features/products/components/safe-product-html";
+import { PendingApprovalBadge } from "@/features/approvals/components/pending-approval-badge";
+import { RequestActionButton } from "@/features/approvals/components/request-action-button";
+import { isLastVariant } from "@/features/products/lib/variant-delete-guard";
 import { ApiError, presentApiError } from "@/shared/lib/api-client";
 import { formatPersianDateTime, formatPrice, formatPersianNumber } from "@/shared/lib/formatters";
 import { Can } from "@/shared/permissions/permission-context";
@@ -40,14 +43,52 @@ export function ProductDetails({ id }: { id: string }) {
         </Alert>
       ) : null}
 
-      <header className="rounded-xl border border-[var(--border)] bg-white p-5 shadow-sm">
-        <h1 className="text-2xl font-black">{product.title || "محصول بدون عنوان"}</h1>
-        <p className="mt-2 text-sm text-[var(--muted)]">شناسهٔ محصول: {product.id}</p>
+      <header className="space-y-4 rounded-xl border border-[var(--border)] bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-black">{product.title || "محصول بدون عنوان"}</h1>
+          <PendingApprovalBadge targetEntityType="Product" targetEntityId={product.id} />
+        </div>
+        <p className="text-sm text-[var(--muted)]">شناسهٔ محصول: {product.id}</p>
         <Can permission="catalog.products.write">
-          <Link className="mt-4 inline-flex rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-bold text-white" href={`/products/${encodeURIComponent(product.id)}/edit`}>
+          <Link className="inline-flex rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-bold text-white" href={`/products/${encodeURIComponent(product.id)}/edit`}>
             ویرایش محصول
           </Link>
         </Can>
+
+        <div className="flex flex-wrap gap-3 border-t border-[var(--border)] pt-4">
+          <RequestActionButton
+            permission="catalog.products.delete.request"
+            label="درخواست حذف محصول"
+            requestType="catalog.product.delete"
+            targetEntityType="Product"
+            targetEntityId={product.id}
+            payload={{ productId: product.id }}
+          />
+          <RequestActionButton
+            permission="catalog.products.publish.request"
+            label={product.isPending ? "درخواست انتشار" : "درخواست لغو انتشار"}
+            requestType="catalog.product.publish"
+            targetEntityType="Product"
+            targetEntityId={product.id}
+            payload={{ productId: product.id, publish: Boolean(product.isPending) }}
+          />
+          <RequestActionButton
+            permission="catalog.products.status.request"
+            label={product.statuses.includes("featured") ? "درخواست خاموش‌کردن ویژه" : "درخواست ویژه‌کردن"}
+            requestType="catalog.product.status"
+            targetEntityType="Product"
+            targetEntityId={product.id}
+            payload={{ productId: product.id, statusKey: "featured" }}
+          />
+          <RequestActionButton
+            permission="catalog.products.status.request"
+            label={product.statuses.includes("most") ? "درخواست خاموش‌کردن پرفروش‌ترین" : "درخواست پرفروش‌ترین‌کردن"}
+            requestType="catalog.product.status"
+            targetEntityType="Product"
+            targetEntityId={product.id}
+            payload={{ productId: product.id, statusKey: "most" }}
+          />
+        </div>
       </header>
 
       {product.description ? <section className="rounded-xl border border-[var(--border)] bg-white p-5"><SafeProductHtml html={product.description} /></section> : null}
@@ -57,7 +98,13 @@ export function ProductDetails({ id }: { id: string }) {
         {product.variants.length === 0 ? (
           <p className="rounded-xl border border-[var(--border)] bg-white p-5 text-sm text-[var(--muted)]">این محصول واریانتی ندارد.</p>
         ) : product.variants.map((variant, index) => (
-          <VariantCard key={variant.id ?? `${variant.title}-${index}`} productId={product.id} variant={variant} disabled={product.isStale || !variant.id} />
+          <VariantCard
+            key={variant.id ?? `${variant.title}-${index}`}
+            productId={product.id}
+            variant={variant}
+            disabled={product.isStale || !variant.id}
+            variantCount={product.variants.length}
+          />
         ))}
       </div>
     </section>
@@ -68,12 +115,15 @@ function VariantCard({
   productId,
   variant,
   disabled,
+  variantCount,
 }: {
   productId: string;
   variant: ProductVariant;
   disabled: boolean;
+  variantCount: number;
 }) {
   const [editing, setEditing] = useState(false);
+  const lastVariant = isLastVariant(variantCount);
 
   return (
     <article className="space-y-4 rounded-xl border border-[var(--border)] bg-white p-5 shadow-sm">
@@ -84,6 +134,7 @@ function VariantCard({
             <Badge tone={Number(variant.stock ?? 0) > 0 ? "success" : "neutral"}>
               {Number(variant.stock ?? 0) > 0 ? "موجود" : "ناموجود"}
             </Badge>
+            <PendingApprovalBadge targetEntityType="Variant" targetEntityId={variant.id ?? null} />
           </div>
           <p className="text-sm">قیمت: {formatPrice(variant.price)}</p>
           <p className="text-sm">موجودی: {variant.stock == null ? "تعریف نشده" : formatPersianNumber(variant.stock)}</p>
@@ -100,6 +151,19 @@ function VariantCard({
         <Can permission="catalog.products.write">
           <VariantEditor productId={productId} variant={variant} disabled={disabled} onSaved={() => setEditing(false)} />
         </Can>
+      ) : null}
+
+      {variant.id ? (
+        <RequestActionButton
+          permission="catalog.variants.delete.request"
+          label="درخواست حذف واریانت"
+          requestType="catalog.variant.delete"
+          targetEntityType="Variant"
+          targetEntityId={variant.id}
+          payload={{ productId, variantId: variant.id }}
+          disabled={disabled || lastVariant}
+          disabledReason={lastVariant ? "این تنها واریانت محصول است؛ حذف آن محصول را بی‌قیمت و غیرقابل‌خرید می‌کند." : undefined}
+        />
       ) : null}
     </article>
   );

@@ -59,6 +59,11 @@ dotnet ef database update \
   --project src/Modules/Auditing/NafasLand.Admin.Modules.Auditing.csproj \
   --startup-project src/Api/NafasLand.Admin.Api.csproj \
   --context NafasLand.Admin.Modules.Auditing.Persistence.AuditingDbContext
+
+dotnet ef database update \
+  --project src/Modules/Approvals/NafasLand.Admin.Modules.Approvals.csproj \
+  --startup-project src/Api/NafasLand.Admin.Api.csproj \
+  --context NafasLand.Admin.Modules.Approvals.Persistence.ApprovalsDbContext
 ```
 
 ۴. اجرا:
@@ -343,6 +348,93 @@ curl -s "http://localhost:8080/api/v1/catalog/products/<Portal:TestProductId>" \
 است و در این مرحله آپلود، حذف، تغییر ترتیب یا جایگزینی تصویر وجود ندارد.
 قیمت و موجودی محصول موجود نیز در فرم محصول تغییر نمی‌کنند و فقط از endpoint
 `PATCH /api/v1/catalog/products/variants/{variantId}` به‌روزرسانی می‌شوند.
+
+## تأیید و حذف/انتشار محصول (ماژول Approvals، گام ۸)
+
+چهار عملیات پرریسک روی محصول — حذف، انتشار/لغو انتشار، تغییر `featured`/`most`
+و حذف واریانت — مستقیماً توسط Admin اجرا نمی‌شوند. هرکدام از مسیر «ثبت درخواست
+← تأیید یا رد سوپرادمین ← اجرای واقعی روی پرتال» عبور می‌کند (ADR-010،
+ADR-030، ADR-031، ADR-032). ماژول `Approvals` عمومی است و دانشی از Catalog
+ندارد؛ Catalog فقط چهار «مجری» (`IApprovalExecutor`) در `src/Modules/Catalog/Approvals/`
+رجیستر می‌کند.
+
+### Permissionهای تازه
+
+ADR-010/ADR-030/ADR-031 کلیدهای permission را بدون پیشوند ماژول نوشته‌اند
+(`product.delete.request`، `approval.review`، ...)؛ این پیاده‌سازی، مثل تصحیح
+مشابه گام ۶ برای `catalog.products.write`، قرارداد واقعی کد (پیشوند ماژول
+کوچک‌حروف) را ادامه می‌دهد:
+
+| Permission | نقش | IsSuperAdminOnly |
+| --- | --- | --- |
+| `catalog.products.delete.request` | Admin | خیر |
+| `catalog.products.delete` | SuperAdmin | بله |
+| `catalog.products.publish.request` | Admin | خیر |
+| `catalog.products.publish` | SuperAdmin | بله |
+| `catalog.products.status.request` (برای `featured`/`most`) | Admin | خیر |
+| `catalog.products.status` | SuperAdmin | بله |
+| `catalog.variants.delete.request` | Admin | خیر |
+| `catalog.variants.delete` | SuperAdmin | بله |
+| `approvals.review` (ثبت approve/reject/retry) | SuperAdmin | بله |
+| `approvals.read.all` (کارتابل کامل) | SuperAdmin | بله |
+
+`approval.read.own` در ADR برای «همهٔ نقش‌ها» است — چون در مدل default-closed
+هیچ permissionی برای «همه» قابل Grant نیست، این عملاً یک permission جداگانه
+نیست؛ `GET /api/v1/approvals?mine=true` و `GET /api/v1/approvals/{id}` برای هر
+کاربر واردشده باز است و در کد به‌صورت دستی به `RequestedByUserId == کاربر
+جاری` محدود می‌شود مگر کاربر `approvals.read.all` داشته باشد.
+
+### جریان از دید کلاینت
+
+```bash
+# ۱) ادمین درخواست حذف محصول تستی را ثبت می‌کند (نیاز به catalog.products.delete.request)
+curl -s -X POST "http://localhost:8080/api/v1/approvals" \
+  -b cookies.txt -H "Content-Type: application/json" -H "X-XSRF-TOKEN: $TOKEN" \
+  -d '{"requestType":"catalog.product.delete","targetEntityType":"Product","targetEntityId":"<Portal:TestProductId>","reason":"محصول تستی دیگر لازم نیست","payload":{"productId":"<Portal:TestProductId>"}}'
+
+# ۲) سوپرادمین کارتابل را می‌بیند (نیاز به approvals.read.all)
+curl -s "http://localhost:8080/api/v1/approvals?status=Pending" -b cookies.txt
+
+# ۳) سوپرادمین جزئیات را با پیش‌نمایش زنده از پرتال می‌بیند
+curl -s "http://localhost:8080/api/v1/approvals/<id>" -b cookies.txt
+
+# ۴) تأیید (نیاز به approvals.review) — بلافاصله اجرا هم می‌شود
+curl -s -X POST "http://localhost:8080/api/v1/approvals/<id>/approval" \
+  -b cookies.txt -H "Content-Type: application/json" -H "X-XSRF-TOKEN: $TOKEN" -d '{"note":null}'
+```
+
+هر درخواست `Pending` که ۷ روز بدون تصمیم بماند، با یک Hangfire recurring job
+(`approvals-expire-pending`، هر روز ساعت ۰۳:۰۰) به‌صورت خودکار `Expired`
+می‌شود.
+
+### نمونهٔ خطای `409` (تصمیم روی درخواست ترمینال یا تداخل هم‌زمان)
+
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "Conflict",
+  "status": 409,
+  "detail": "این درخواست دیگر در وضعیت «در انتظار» نیست؛ تصمیمی روی آن قبلاً ثبت شده.",
+  "correlationId": "..."
+}
+```
+
+### نمونهٔ خطای `403` (دسترسی تأییدکننده از زمان ثبت درخواست تغییر کرده)
+
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+  "title": "Forbidden",
+  "status": 403,
+  "detail": "دسترسی catalog.products.delete لازم است؛ دسترسی تأییدکننده از زمان ثبت درخواست تغییر کرده است.",
+  "correlationId": "..."
+}
+```
+
+شکست تماس با پرتال هنگام اجرا خطای HTTP نیست: پاسخ `POST .../approval` همچنان
+`200` است و بدنه `status: "ExecutionFailed"` و `executionError` را برمی‌گرداند؛
+تصمیم تأیید از دست نمی‌رود و فقط با `POST /api/v1/approvals/{id}/retry`
+(دستی، بدون تلاش خودکار) دوباره اجرا می‌شود.
 
 ## متغیرهای محیطی (`.env`)
 

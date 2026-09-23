@@ -30,6 +30,9 @@ public interface IPortalProductClient
         PortalProductWriteModel product,
         CancellationToken cancellationToken);
 
+    /// <summary>DELETE /manage/store/products/:id (ADR-017) — used only by the catalog.product.delete approval executor, never called directly from an Admin-facing command.</summary>
+    Task DeleteProductAsync(string externalProductId, CancellationToken cancellationToken);
+
     Task<IReadOnlyList<PortalCategoryNode>> ListCategoriesAsync(CancellationToken cancellationToken);
 
     Task<IReadOnlyList<PortalFilterGroup>> ListFiltersAsync(CancellationToken cancellationToken);
