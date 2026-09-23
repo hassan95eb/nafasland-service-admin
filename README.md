@@ -91,42 +91,60 @@ cp .env.example .env
 # PORTAL__BASEURL، PORTAL__BEARERTOKEN، PORTAL__TESTPRODUCTID،
 # IDENTITY__SUPERADMIN__USERNAME، IDENTITY__SUPERADMIN__PASSWORD
 
-docker compose up --build
+./scripts/dev-up.sh
 ```
+
+این اسکریپت کل توالی محیط توسعه را با یک دستور انجام می‌دهد: بالا آوردن
+`mssql`، صبر برای healthy شدن آن، اجرای مهاجرت هر چهار ماژول از host (نیاز به
+`dotnet-ef`؛ `dotnet tool install --global dotnet-ef`)، و بعد بالا آوردن
+`api`، `web` و `proxy`. مهاجرت همچنان یک گام صریح می‌ماند (ADR-041) — فقط دیگر
+لازم نیست هر بار دستی تایپ شود؛ خودِ اپ هنوز فقط مهاجرت معوق را در استارتاپ
+بررسی می‌کند، نه اجرا. برای دیدن لاگ‌ها به‌جای اجرای پس‌زمینه:
+`./scripts/dev-up.sh` بدون `-d`؛ برای پاس‌دادن آرگومان اضافه به
+`docker compose up` (مثلاً `-d`)، همان‌ها را بعد از اسکریپت بده.
 
 `compose.override.yaml` به‌صورت پیش‌فرض همراه `compose.yaml` خوانده می‌شود و
 حالت توسعه (hot reload بک‌اند و فرانت) را فعال می‌کند. پنل را از
 `http://localhost:8000` باز کن؛ مرورگر همیشه از همین proxy وارد می‌شود و پورت
 خام سرویس `web` عمداً به host باز نشده است. پورت ۸۰۰۰ با
-`PROXY_HTTP_PORT` قابل تغییر است. برای استقرار:
+`PROXY_HTTP_PORT` قابل تغییر است.
+
+### استقرار (بدون hot reload)
 
 ```bash
 docker compose -f compose.yaml -f compose.prod.yaml up -d --build
 ```
 
-**مهاجرت هنگام بالا آمدن کانتینر اجرا نمی‌شود.** بعد از بالا آمدن `mssql`
-(و پیش از آنکه `api` بتواند واقعاً کار کند، چون بررسی مهاجرت معوق در
-استارتاپ آن را متوقف می‌کند)، مهاجرت هر سه ماژول را از host اجرا کن — با
-`compose.override.yaml`، پورت ۱۴۳۳ به host باز است:
+`scripts/dev-up.sh` مخصوص محیط توسعه است (روی پورت ۱۴۳۳ باز‌شده توسط
+`compose.override.yaml` تکیه می‌کند). **مهاجرت هنگام بالا آمدن کانتینر اجرا
+نمی‌شود.** بعد از بالا آمدن `mssql` (و پیش از آنکه `api` بتواند واقعاً کار
+کند، چون بررسی مهاجرت معوق در استارتاپ آن را متوقف می‌کند)، مهاجرت هر چهار
+ماژول را از host اجرا کن:
 
 ```bash
 dotnet ef database update \
   --project src/Modules/Sample/NafasLand.Admin.Modules.Sample.csproj \
   --startup-project src/Api/NafasLand.Admin.Api.csproj \
   --context NafasLand.Admin.Modules.Sample.Persistence.SampleDbContext \
-  --connection "Server=localhost,1433;Database=NafasLandAdmin;User Id=sa;Password=<همان MSSQL_SA_PASSWORD>;TrustServerCertificate=True;"
+  --connection "Server=<هاست mssql>;Database=NafasLandAdmin;User Id=sa;Password=<همان MSSQL_SA_PASSWORD>;TrustServerCertificate=True;"
 
 dotnet ef database update \
   --project src/Modules/Identity/NafasLand.Admin.Modules.Identity.csproj \
   --startup-project src/Api/NafasLand.Admin.Api.csproj \
   --context NafasLand.Admin.Modules.Identity.Persistence.IdentityDbContext \
-  --connection "Server=localhost,1433;Database=NafasLandAdmin;User Id=sa;Password=<همان MSSQL_SA_PASSWORD>;TrustServerCertificate=True;"
+  --connection "Server=<هاست mssql>;Database=NafasLandAdmin;User Id=sa;Password=<همان MSSQL_SA_PASSWORD>;TrustServerCertificate=True;"
 
 dotnet ef database update \
   --project src/Modules/Auditing/NafasLand.Admin.Modules.Auditing.csproj \
   --startup-project src/Api/NafasLand.Admin.Api.csproj \
   --context NafasLand.Admin.Modules.Auditing.Persistence.AuditingDbContext \
-  --connection "Server=localhost,1433;Database=NafasLandAdmin;User Id=sa;Password=<همان MSSQL_SA_PASSWORD>;TrustServerCertificate=True;"
+  --connection "Server=<هاست mssql>;Database=NafasLandAdmin;User Id=sa;Password=<همان MSSQL_SA_PASSWORD>;TrustServerCertificate=True;"
+
+dotnet ef database update \
+  --project src/Modules/Catalog/NafasLand.Admin.Modules.Catalog.csproj \
+  --startup-project src/Api/NafasLand.Admin.Api.csproj \
+  --context NafasLand.Admin.Modules.Catalog.Persistence.CatalogDbContext \
+  --connection "Server=<هاست mssql>;Database=NafasLandAdmin;User Id=sa;Password=<همان MSSQL_SA_PASSWORD>;TrustServerCertificate=True;"
 ```
 
 بررسی سلامت مستقیم API: `curl http://localhost:8080/health`.
