@@ -8,16 +8,19 @@ import type { ProductDetail } from "@/features/products/api/get-product";
 import type { CreateProductRequest, UpdateProductRequest } from "@/features/products/api/product-editor";
 import { productQueryKeys } from "@/features/products/api/list-products";
 import { RichTextEditor } from "@/features/products/components/rich-text-editor";
+import { TaxonomySelectors } from "@/features/products/components/taxonomy-selectors";
 import { useCreateProduct, useProductTaxonomy, useUpdateProduct } from "@/features/products/hooks/use-product-editor";
 import { createRichTextState, type RichTextState } from "@/features/products/lib/rich-text-state";
 import { createIdempotencyKey } from "@/features/products/lib/idempotency-key";
-import { createVariantSchema, isSelectableCategory, productEditorSchema, selectedFilterIds, validateProductKind } from "@/features/products/schemas/product-editor-schema";
+import { createVariantSchema, productEditorSchema, selectedFilterIds, validateProductKind } from "@/features/products/schemas/product-editor-schema";
 import { ApiError, presentApiError } from "@/shared/lib/api-client";
 import { formatPersianDateTime, formatPrice, formatPersianNumber } from "@/shared/lib/formatters";
 import { Alert } from "@/shared/ui/alert";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { LoadingOverlay } from "@/shared/ui/loading-overlay";
+import { SaveBar } from "@/shared/ui/save-bar";
 
 type NamedValue = { name: string; value: string };
 type ContentValue = NamedValue & { editor: RichTextState };
@@ -149,7 +152,9 @@ export function ProductForm({ mode, product }: { mode: "create" | "edit"; produc
   }
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit} noValidate>
+    <form className="relative space-y-6 pb-24" onSubmit={handleSubmit} noValidate aria-busy={mutationPending}>
+      {mutationPending ? <LoadingOverlay label="در حال ذخیرهٔ محصول…" /> : null}
+
       <header className="space-y-1">
         <h1 className="text-2xl font-black">{mode === "create" ? "ایجاد محصول" : "ویرایش محصول"}</h1>
         <p className="text-sm text-[var(--muted)]">قیمت و موجودی محصول موجود فقط از بخش واریانت‌ها تغییر می‌کند.</p>
@@ -212,9 +217,11 @@ export function ProductForm({ mode, product }: { mode: "create" | "edit"; produc
         }} attributes={attributes} onAttributes={setAttributes} variants={variants} onVariants={setVariants} />
       ) : product ? <ReadOnlyProductData product={product} /> : null}
 
-      <Button type="submit" disabled={mutationPending || unavailable || taxonomy.categories.isPending || taxonomy.filters.isPending}>
-        {mutationPending ? "در حال ذخیره…" : "ذخیره"}
-      </Button>
+      <SaveBar
+        message={error}
+        loading={mutationPending}
+        disabled={unavailable || taxonomy.categories.isPending || taxonomy.filters.isPending}
+      />
     </form>
   );
 }
@@ -237,12 +244,6 @@ function toApiNameValue(item: NamedValue) { return { name: item.name, value: ite
 function replaceAt<T>(values: T[], index: number, value: T) { return values.map((item, current) => current === index ? value : item); }
 function removeAt<T>(values: T[], index: number) { return values.filter((_, current) => current !== index); }
 
-function toggle(values: Set<string>, id: string) {
-  const next = new Set(values);
-  if (next.has(id)) next.delete(id); else next.add(id);
-  return next;
-}
-
 function Field({ label, name, defaultValue, required = false }: { label: string; name: string; defaultValue: string; required?: boolean }) {
   return <div className="space-y-2"><label className="text-sm font-bold" htmlFor={name}>{label}</label><Input id={name} name={name} defaultValue={defaultValue} required={required} /></div>;
 }
@@ -259,28 +260,6 @@ function NamedValuesEditor({ title, values, onChange }: { title: string; values:
       <Button type="button" variant="secondary" onClick={() => onChange([...values, { name: "", value: "" }])}>افزودن</Button>
     </section>
   );
-}
-
-function TaxonomySelectors({ categories, filters, categoryIds, filterIds, onCategoryIds, onFilterIds }: {
-  categories: NonNullable<ReturnType<typeof useProductTaxonomy>["categories"]["data"]>["items"];
-  filters: NonNullable<ReturnType<typeof useProductTaxonomy>["filters"]["data"]>["items"];
-  categoryIds: Set<string>; filterIds: Set<string>;
-  onCategoryIds: (value: Set<string>) => void; onFilterIds: (value: Set<string>) => void;
-}) {
-  return <section className="grid gap-5 rounded-xl border border-[var(--border)] bg-white p-5 md:grid-cols-2">
-    <div className="space-y-2"><h2 className="font-black">دسته‌بندی‌ها</h2>{categories.map((item) => <CategoryItem key={item.id} item={item} selected={categoryIds} onChange={onCategoryIds} depth={0} />)}</div>
-    <div className="space-y-4"><h2 className="font-black">فیلترها</h2>{filters.map((group) => <fieldset key={group.id} className="space-y-2"><legend className="font-bold">{group.title}</legend>{group.values.map((value) => <label className="flex gap-2 text-sm" key={value.id}><input type="checkbox" checked={filterIds.has(value.id)} onChange={() => onFilterIds(toggle(filterIds, value.id))} />{value.title}</label>)}</fieldset>)}</div>
-  </section>;
-}
-
-function CategoryItem({ item, selected, onChange, depth }: {
-  item: NonNullable<ReturnType<typeof useProductTaxonomy>["categories"]["data"]>["items"][number];
-  selected: Set<string>; onChange: (value: Set<string>) => void; depth: number;
-}) {
-  return <div style={{ paddingInlineStart: `${depth * 16}px` }}>
-    <label className="flex gap-2 text-sm"><input type="checkbox" disabled={!isSelectableCategory(item.type)} checked={selected.has(item.id)} onChange={() => onChange(toggle(selected, item.id))} />{item.title} {!isSelectableCategory(item.type) ? <span className="text-[var(--muted)]">(والد)</span> : null}</label>
-    {item.children.map((child) => <CategoryItem key={child.id} item={child} selected={selected} onChange={onChange} depth={depth + 1} />)}
-  </div>;
 }
 
 function CreateVariants({ kind, onKindChange, attributes, onAttributes, variants, onVariants }: {

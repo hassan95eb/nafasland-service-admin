@@ -61,7 +61,7 @@ export function LoginForm() {
         <Input id="password" name="password" type="password" autoComplete="current-password" />
       </div>
 
-      <Button className="w-full" type="submit" disabled={isSubmitting}>
+      <Button className="w-full" type="submit" loading={isSubmitting}>
         {isSubmitting ? "در حال ورود…" : "ورود به پنل"}
       </Button>
     </form>
