@@ -171,7 +171,7 @@ function VariantEditor({
         <Input id={`stock-${variant.id}`} name="newStock" inputMode="numeric" defaultValue={variant.stock ?? ""} disabled={disabled} />
       </div>
       <div className="md:col-span-2">
-        <Button type="submit" disabled={disabled || mutation.isPending}>
+        <Button type="submit" disabled={disabled} loading={mutation.isPending}>
           {mutation.isPending ? "در حال ذخیره…" : "ذخیرهٔ قیمت و موجودی"}
         </Button>
       </div>

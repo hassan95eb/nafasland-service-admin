@@ -52,7 +52,7 @@ export function ChangePasswordForm({ returnTo = "/products" }: { returnTo?: stri
         <Input id="new-password" name="newPassword" type="password" autoComplete="new-password" />
         <p className="text-xs text-[var(--muted)]">حداقل ۸ نویسه و متفاوت از رمز فعلی</p>
       </div>
-      <Button className="w-full" type="submit" disabled={isSubmitting}>{isSubmitting ? "در حال تغییر…" : "تغییر رمز و ادامه"}</Button>
+      <Button className="w-full" type="submit" loading={isSubmitting}>{isSubmitting ? "در حال تغییر…" : "تغییر رمز و ادامه"}</Button>
     </form>
   );
 }

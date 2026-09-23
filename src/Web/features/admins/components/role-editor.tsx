@@ -59,7 +59,7 @@ export function RoleEditor({ admin, canManageAccess }: { admin: AdminDetails; ca
         })}
       </div>
       {message ? <Alert tone={message.includes("ذخیره شد") ? "warning" : "danger"}>{message}</Alert> : null}
-      <Button type="button" disabled={admin.isProtected || roles.isPending || mutation.isPending} onClick={save}>ذخیرهٔ نقش‌ها</Button>
+      <Button type="button" disabled={admin.isProtected || roles.isPending} loading={mutation.isPending} onClick={save}>ذخیرهٔ نقش‌ها</Button>
     </section>
   );
 }

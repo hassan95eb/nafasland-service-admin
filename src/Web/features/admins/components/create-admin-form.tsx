@@ -50,7 +50,7 @@ export function CreateAdminForm() {
           <label className="block text-sm font-bold" htmlFor="new-admin-username">نام کاربری</label>
           <Input id="new-admin-username" name="username" autoComplete="off" />
         </div>
-        <Button type="submit" disabled={mutation.isPending}>
+        <Button type="submit" loading={mutation.isPending}>
           {mutation.isPending ? "در حال ساخت…" : "ساخت ادمین"}
         </Button>
       </form>
