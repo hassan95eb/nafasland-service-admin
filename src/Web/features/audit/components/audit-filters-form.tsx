@@ -3,7 +3,8 @@
 import { useState, type FormEvent } from "react";
 
 import { useAuditActors } from "@/features/audit/hooks/use-audit";
-import { parseJalaliDate, type AuditFilters } from "@/features/audit/lib/audit-filters";
+import type { AuditFilters } from "@/features/audit/lib/audit-filters";
+import { parseJalaliDate } from "@/shared/lib/jalali-date";
 import { actionLabels, actorDisplayName, entityTypeLabels, outcomeLabels, outcomeNames } from "@/features/audit/lib/audit-labels";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";

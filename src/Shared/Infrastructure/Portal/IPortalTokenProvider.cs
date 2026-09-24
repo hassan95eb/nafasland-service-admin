@@ -1,4 +1,4 @@
-namespace NafasLand.Admin.Modules.Catalog.Contracts;
+namespace NafasLand.Admin.Shared.Infrastructure.Portal;
 
 public interface IPortalTokenProvider
 {

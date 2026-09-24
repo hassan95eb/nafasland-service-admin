@@ -28,6 +28,7 @@
     <ProjectReference Include="..\..\src\Modules\Auditing\NafasLand.Admin.Modules.Auditing.csproj" />
     <ProjectReference Include="..\..\src\Modules\Catalog\NafasLand.Admin.Modules.Catalog.csproj" />
     <ProjectReference Include="..\..\src\Modules\Approvals\NafasLand.Admin.Modules.Approvals.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Returns\NafasLand.Admin.Modules.Returns.csproj" />
   </ItemGroup>
 
 </Project>

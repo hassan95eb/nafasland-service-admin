@@ -46,7 +46,8 @@ internal static class GetApprovalRequestEndpoint
                             preview = await executor.PreviewAsync(request.PayloadJson, cancellationToken);
                         }
                         catch (Exception exception) when (
-                            exception is ResourceNotFoundException or PortalUnavailableException or AuthorizationDeniedException)
+                            exception is ResourceNotFoundException or PortalUnavailableException or AuthorizationDeniedException
+                                or BusinessRuleException or ConflictException)
                         {
                             // Left null; the client falls back to the stored SnapshotJson/reason.
                             // AuthorizationDeniedException here means the executor's own
@@ -55,6 +56,9 @@ internal static class GetApprovalRequestEndpoint
                             // was filed. The request itself must still be viewable (and
                             // rejectable/cancellable) even though it can no longer be
                             // approved; ExecuteAsync enforces the real block at decision time.
+                            // BusinessRule/Conflict: an executor's filing rule no longer holds
+                            // (e.g. Returns: the order was canceled, or another request for
+                            // the same order was already approved) — same reasoning.
                         }
                     }
                 }

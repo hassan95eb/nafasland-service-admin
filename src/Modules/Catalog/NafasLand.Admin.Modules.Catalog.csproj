@@ -10,7 +10,6 @@
     <PackageReference Include="Hangfire.AspNetCore" />
     <!-- Hangfire.Core pulls an old vulnerable Newtonsoft.Json; use the repository's patched override. -->
     <PackageReference Include="Newtonsoft.Json" />
-    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
     <PackageReference Include="HtmlSanitizer" />
   </ItemGroup>
 

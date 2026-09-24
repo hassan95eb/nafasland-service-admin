@@ -64,6 +64,11 @@ dotnet ef database update \
   --project src/Modules/Approvals/NafasLand.Admin.Modules.Approvals.csproj \
   --startup-project src/Api/NafasLand.Admin.Api.csproj \
   --context NafasLand.Admin.Modules.Approvals.Persistence.ApprovalsDbContext
+
+dotnet ef database update \
+  --project src/Modules/Returns/NafasLand.Admin.Modules.Returns.csproj \
+  --startup-project src/Api/NafasLand.Admin.Api.csproj \
+  --context NafasLand.Admin.Modules.Returns.Persistence.ReturnsDbContext
 ```
 
 ۴. اجرا:
@@ -149,6 +154,12 @@ dotnet ef database update \
   --project src/Modules/Catalog/NafasLand.Admin.Modules.Catalog.csproj \
   --startup-project src/Api/NafasLand.Admin.Api.csproj \
   --context NafasLand.Admin.Modules.Catalog.Persistence.CatalogDbContext \
+  --connection "Server=<هاست mssql>;Database=NafasLandAdmin;User Id=sa;Password=<همان MSSQL_SA_PASSWORD>;TrustServerCertificate=True;"
+
+dotnet ef database update \
+  --project src/Modules/Returns/NafasLand.Admin.Modules.Returns.csproj \
+  --startup-project src/Api/NafasLand.Admin.Api.csproj \
+  --context NafasLand.Admin.Modules.Returns.Persistence.ReturnsDbContext \
   --connection "Server=<هاست mssql>;Database=NafasLandAdmin;User Id=sa;Password=<همان MSSQL_SA_PASSWORD>;TrustServerCertificate=True;"
 ```
 
@@ -470,6 +481,62 @@ curl -s -X POST "http://localhost:8080/api/v1/approvals/<id>/approval" \
 - مهاجرت تازهٔ این گام (`AddAuditLogParentEntity` در schema `audit`) را مثل بقیه
   با `dotnet ef database update` برای `AuditingDbContext` اجرا کن
   (`scripts/dev-up.sh` این کار را خودش می‌کند).
+
+## ثبت مرجوعی (ماژول Returns، گام ۱۱)
+
+ADR-054. ادمین شمارهٔ سفارش را وارد می‌کند، پنل سفارش را **فقط می‌خواند**
+(`GET /manage/store/orders/:id`)، ادمین علت و تاریخ عودت را می‌نویسد و درخواست
+از همان `POST /api/v1/approvals` موجود با نوع `returns.register` ثبت می‌شود.
+سوپرادمین در کارتابل تأیید یا رد می‌کند. رکورد مرجوعی **فقط بعد از تأیید**
+ساخته می‌شود؛ رد شدن هیچ رکوردی نمی‌سازد. **هیچ چیزی در پرتال نوشته نمی‌شود.**
+
+### Permissionها
+
+| کلید | نام نمایشی | فقط سوپرادمین | کاربرد |
+| --- | --- | --- | --- |
+| `returns.request` | ثبت درخواست مرجوعی | خیر | دریافت سفارش و ثبت درخواست؛ قابل انتساب به Admin |
+| `returns.review` | تأیید یا رد مرجوعی | بله | در لحظهٔ تأیید دوباره بررسی می‌شود (کنار `approvals.review`) |
+| `returns.read.all` | مشاهدهٔ همهٔ مرجوعی‌ها | بله | بدون آن هر کاربر فقط مرجوعی‌های ثبت‌کردهٔ خودش را می‌بیند |
+
+### مسیرها
+
+| مسیر پنل | دسترسی | چه چیزی |
+| --- | --- | --- |
+| `/returns/new` | `returns.request` | دریافت سفارش، جدول اقلام و مبلغ‌ها، علت و تاریخ عودت شمسی، «ثبت برای تأیید» |
+| `/returns` | هر کاربر واردشده | تب «تأییدشده» (فهرست keyset با جزئیات) و تب «در انتظار / ردشده» (درخواست‌های خود کاربر از Approvals، با لغو و دلیل رد) |
+
+| اندپوینت API | دسترسی |
+| --- | --- |
+| `GET /api/v1/returns/orders/{orderId}` | `returns.request` — پیش‌نمایش سفارش؛ `404` اگر سفارش نباشد |
+| `GET /api/v1/returns` | همه با `returns.read.all`، بقیه فقط مال خودشان |
+| `GET /api/v1/returns/{id}` | همان؛ رکورد کاربر دیگر `404` است، نه `403` |
+
+قواعد ثبت (هم هنگام ثبت درخواست، هم هنگام اجرا): سفارش باید `paid` داشته باشد و
+`canceled` نداشته باشد (`422`)؛ برای هر سفارش فقط یک مرجوعی (`409`)؛ تاریخ عودت نه
+در آینده و نه پیش از روز ثبت سفارش (به وقت تهران). هیچ اندپوینت ویرایش یا حذف
+مرجوعی وجود ندارد.
+
+### چه چیزی ذخیره می‌شود و چه چیزی نه
+
+- جدول `returns.ReturnRecords`: شمارهٔ سفارش، **نام مشتری**، مبلغ‌ها (عدد خام
+  پرتال)، زمان ایجاد سفارش (از `created.timestamp`، UTC)، وضعیت‌ها و اقلام (ستون
+  JSON)، علت، تاریخ عودت (`date`)، ثبت‌کننده و زمان ثبت درخواست، تأییدکننده و
+  زمان تأیید. اطلاعات سفارش در لحظهٔ تأیید سمت سرور از پرتال خوانده می‌شود، نه
+  از مرورگر.
+- `ApprovalRequestId` و `OrderId` محدودیت یکتایی دارند؛ تلاش دوباره بعد از
+  `ExecutionFailed` رکورد دوم نمی‌سازد.
+- موبایل، تلفن، ایمیل، آدرس، کدپستی، IP، کد ملی، نام کاربری و اطلاعات پرداخت
+  مشتری اصلاً از پاسخ پرتال خوانده نمی‌شوند؛ نه ذخیره، نه لاگ، نه به مرورگر.
+
+### زیرساخت مشترک پرتال
+
+`PortalConnectionOptions`، توکن، محدودکنندهٔ نرخ و resilience در
+`src/Shared/Infrastructure/Portal` هستند و هر ماژول فقط با
+`services.AddPortalHttpClient<TClient, TImpl>(configuration)` به پرتال وصل
+می‌شود؛ همهٔ کلاینت‌ها از **یک** `PortalRateLimiter` می‌گذرند (ADR-026).
+کلیدهای `Portal:*` و متغیرهای `Portal__*` تغییر نکرده‌اند؛ کلیدهای مخصوص Catalog
+(`TestProductId`، `AllowProductCreation`، `RestrictWritesToTestProduct`) در
+`PortalOptions` خود Catalog مانده‌اند.
 
 ## متغیرهای محیطی (`.env`)
 

@@ -3,11 +3,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using NafasLand.Admin.Modules.Catalog.Approvals;
 using NafasLand.Admin.Modules.Catalog.Contracts;
-using NafasLand.Admin.Modules.Catalog.Contracts.Configuration;
 using NafasLand.Admin.Modules.Catalog.Features.Queries;
 using NafasLand.Admin.Modules.Catalog.Features.CreateProduct;
 using NafasLand.Admin.Modules.Catalog.Features.UpdateProduct;
@@ -17,13 +15,13 @@ using NafasLand.Admin.Modules.Catalog.Jobs;
 using NafasLand.Admin.Modules.Catalog.Persistence;
 using NafasLand.Admin.Shared.Infrastructure.Configuration;
 using NafasLand.Admin.Shared.Infrastructure.Persistence;
+using NafasLand.Admin.Shared.Infrastructure.Portal;
 using NafasLand.Admin.Shared.Kernel.Approvals;
 using NafasLand.Admin.Shared.Kernel.Idempotency;
 using NafasLand.Admin.Shared.Kernel.Messaging;
 using NafasLand.Admin.Shared.Kernel.Modules;
 using NafasLand.Admin.Shared.Kernel.Persistence;
 using NafasLand.Admin.Shared.Kernel.Permissions;
-using Polly;
 
 namespace NafasLand.Admin.Modules.Catalog;
 
@@ -31,9 +29,6 @@ internal sealed class CatalogModule : IModule
 {
     public void RegisterServices(IServiceCollection services, IConfiguration configuration)
     {
-        var portalOptions = configuration.GetSection(PortalOptions.SectionName).Get<PortalOptions>()
-            ?? new PortalOptions();
-
         services.AddDbContext<CatalogDbContext>((serviceProvider, options) =>
         {
             var databaseOptions = serviceProvider.GetRequiredService<IOptions<DatabaseOptions>>().Value;
@@ -51,12 +46,9 @@ internal sealed class CatalogModule : IModule
             .AddCheck<EfCoreDatabaseHealthCheck<CatalogDbContext>>("catalog-database");
 
         services.AddMemoryCache();
-        services.AddSingleton<PortalRateLimiter>();
-        services.AddTransient<PortalRateLimitingHandler>();
         services.AddSingleton<ProductCache>();
         services.AddSingleton<TaxonomyCache>();
         services.AddScoped<IProductHtmlSanitizer, ProductHtmlSanitizer>();
-        services.AddSingleton<IPortalTokenProvider, PortalTokenProvider>();
         services.AddScoped<IdempotencyPurgeJob>();
         services.AddScoped<ICatalogBootstrapper, CatalogBootstrapper>();
         services.AddScoped<IValidator<UpdateVariantPriceAndInventoryCommand>, UpdateVariantPriceAndInventoryCommandValidator>();
@@ -75,42 +67,7 @@ internal sealed class CatalogModule : IModule
         services.AddKeyedScoped<IApprovalExecutor, ProductStatusApprovalExecutor>(ProductStatusApprovalExecutor.RequestTypeKey);
         services.AddKeyedScoped<IApprovalExecutor, DeleteVariantApprovalExecutor>(DeleteVariantApprovalExecutor.RequestTypeKey);
 
-        var httpClient = services.AddHttpClient<IPortalProductClient, PortalProductClient>((serviceProvider, client) =>
-        {
-            var options = serviceProvider.GetRequiredService<IOptions<PortalOptions>>().Value;
-            client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + '/', UriKind.Absolute);
-        });
-        httpClient.RedactLoggedHeaders(headerName =>
-            string.Equals(headerName, "Authorization", StringComparison.OrdinalIgnoreCase));
-
-        httpClient.AddResilienceHandler("portal-read", pipeline =>
-        {
-            var retryOptions = new Microsoft.Extensions.Http.Resilience.HttpRetryStrategyOptions
-            {
-                MaxRetryAttempts = portalOptions.RetryMaxAttempts,
-                Delay = TimeSpan.FromSeconds(portalOptions.RetryBaseDelaySeconds),
-                BackoffType = DelayBackoffType.Exponential,
-                UseJitter = true,
-                ShouldRetryAfterHeader = true,
-            };
-            // POST محصول نباید در لایهٔ HTTP تکرار شود؛ idempotency پنل نمی‌تواند
-            // دو تلاش داخلی یک فراخوانی را در پرتالِ فاقد idempotency key تشخیص دهد.
-            retryOptions.DisableForUnsafeHttpMethods();
-            pipeline
-                .AddRetry(retryOptions)
-                .AddCircuitBreaker(new Microsoft.Extensions.Http.Resilience.HttpCircuitBreakerStrategyOptions
-                {
-                    FailureRatio = 0.5,
-                    MinimumThroughput = portalOptions.CircuitBreakerMinimumThroughput,
-                    SamplingDuration = TimeSpan.FromSeconds(portalOptions.CircuitBreakerSamplingDurationSeconds),
-                    BreakDuration = TimeSpan.FromSeconds(portalOptions.CircuitBreakerBreakDurationSeconds),
-                })
-                .AddTimeout(TimeSpan.FromSeconds(portalOptions.AttemptTimeoutSeconds));
-        });
-
-        // Registration order matters: resilience wraps this handler, therefore
-        // every retry acquires its own global rate-limit permit (ADR-026).
-        httpClient.AddHttpMessageHandler<PortalRateLimitingHandler>();
+        services.AddPortalHttpClient<IPortalProductClient, PortalProductClient>(configuration);
     }
 
     public void MapEndpoints(IEndpointRouteBuilder app)

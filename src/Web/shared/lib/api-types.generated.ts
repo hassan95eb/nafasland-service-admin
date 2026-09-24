@@ -1466,6 +1466,136 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/returns/orders/{orderId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    orderId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OrderPreviewDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/returns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ReturnRecordPageDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/returns/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ReturnRecordDetailDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1681,6 +1811,37 @@ export interface components {
             roles: string[];
             permissions: string[];
         };
+        OrderItemDto: {
+            /** Format: int64 */
+            productId: null | number | string;
+            /** Format: int64 */
+            variantId: null | number | string;
+            title: null | string;
+            /** Format: double */
+            price: null | number | string;
+            /** Format: int32 */
+            quantity: number | string;
+        };
+        OrderPreviewDto: {
+            /** Format: int64 */
+            orderId: number | string;
+            statuses: string[];
+            customerName: null | string;
+            /** Format: double */
+            subtotal: null | number | string;
+            /** Format: double */
+            shipping: null | number | string;
+            /** Format: double */
+            discount: null | number | string;
+            /** Format: double */
+            tax: null | number | string;
+            /** Format: double */
+            total: null | number | string;
+            /** Format: date-time */
+            createdAtUtc: null | string;
+            items: components["schemas"]["OrderItemDto"][];
+            ineligibilityReason: null | string;
+        };
         OutcomeCountDto: {
             outcome: string;
             /** Format: int32 */
@@ -1839,6 +2000,14 @@ export interface components {
             /** Format: int32 */
             weight: null | number | string;
         };
+        ProblemDetails: {
+            type?: null | string;
+            title?: null | string;
+            /** Format: int32 */
+            status?: null | number | string;
+            detail?: null | string;
+            instance?: null | string;
+        };
         ProductAuditHistoryDto: {
             externalProductId: string;
             lastKnownTitle: null | string;
@@ -1852,6 +2021,65 @@ export interface components {
         };
         ResetPasswordRequest: {
             newPassword: string;
+        };
+        ReturnRecordDetailDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int64 */
+            orderId: number | string;
+            customerName: null | string;
+            orderStatuses: string[];
+            /** Format: date-time */
+            orderCreatedAtUtc: null | string;
+            /** Format: double */
+            subtotal: null | number | string;
+            /** Format: double */
+            shipping: null | number | string;
+            /** Format: double */
+            discount: null | number | string;
+            /** Format: double */
+            tax: null | number | string;
+            /** Format: double */
+            total: null | number | string;
+            items: components["schemas"]["OrderItemDto"][];
+            reason: string;
+            /** Format: date */
+            returnDate: string;
+            /** Format: uuid */
+            registeredByUserId: string;
+            registeredByUsername: null | string;
+            /** Format: date-time */
+            registeredAt: string;
+            /** Format: uuid */
+            approvedByUserId: string;
+            approvedByUsername: null | string;
+            /** Format: date-time */
+            approvedAt: string;
+        };
+        ReturnRecordPageDto: {
+            items: components["schemas"]["ReturnRecordSummaryDto"][];
+            nextCursor: null | string;
+        };
+        ReturnRecordSummaryDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int64 */
+            orderId: number | string;
+            customerName: null | string;
+            /** Format: double */
+            total: null | number | string;
+            /** Format: date */
+            returnDate: string;
+            /** Format: uuid */
+            registeredByUserId: string;
+            registeredByUsername: null | string;
+            /** Format: date-time */
+            registeredAt: string;
+            /** Format: uuid */
+            approvedByUserId: string;
+            approvedByUsername: null | string;
+            /** Format: date-time */
+            approvedAt: string;
         };
         RoleResponse: {
             /** Format: uuid */

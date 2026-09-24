@@ -55,5 +55,5 @@ public sealed class DeleteProductApprovalExecutorTests
         Assert.Equal(1, portal.DetailCallCount);
     }
 
-    private static ApprovalContext Context() => new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "correlation-id");
+    private static ApprovalContext Context() => new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "correlation-id", DateTime.UtcNow, DateTime.UtcNow);
 }

@@ -1,16 +1,20 @@
 using System.Threading.RateLimiting;
 using Microsoft.Extensions.Options;
-using NafasLand.Admin.Modules.Catalog.Contracts.Configuration;
 using NafasLand.Admin.Shared.Kernel.Errors;
 
-namespace NafasLand.Admin.Modules.Catalog.Infrastructure;
+namespace NafasLand.Admin.Shared.Infrastructure.Portal;
 
+/// <summary>
+/// The single process-wide limiter in front of every portal call (ADR-026):
+/// the portal's 2 req/s ceiling is per IP, so every module's HttpClient shares
+/// this one singleton — see <see cref="PortalHttpClientExtensions"/>.
+/// </summary>
 internal sealed class PortalRateLimiter : IAsyncDisposable
 {
     private readonly TokenBucketRateLimiter _limiter;
     private readonly TimeSpan _queueTimeout;
 
-    public PortalRateLimiter(IOptions<PortalOptions> options)
+    public PortalRateLimiter(IOptions<PortalConnectionOptions> options)
         : this(options.Value.RateLimitPerSecond, options.Value.RateLimitQueueCapacity,
             TimeSpan.FromSeconds(options.Value.RateLimitQueueTimeoutSeconds))
     {

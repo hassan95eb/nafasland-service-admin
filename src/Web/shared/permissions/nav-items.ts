@@ -10,6 +10,11 @@ export const navItems = [
     permission: "identity.users.manage",
   },
   {
+    href: "/returns",
+    label: "مرجوعی‌ها",
+    permission: "returns.request",
+  },
+  {
     href: "/approvals",
     label: "درخواست‌های من",
     // "approval.read.own" (ADR-010) is available to every role, which under the

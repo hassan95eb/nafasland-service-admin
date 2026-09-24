@@ -1,4 +1,4 @@
-using NafasLand.Admin.Modules.Catalog.Infrastructure;
+using NafasLand.Admin.Shared.Infrastructure.Portal;
 using NafasLand.Admin.Shared.Kernel.Errors;
 
 namespace NafasLand.Admin.Modules.Catalog.Tests.Infrastructure;

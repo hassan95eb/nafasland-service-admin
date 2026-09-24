@@ -1,10 +1,8 @@
 using Microsoft.Extensions.Options;
-using NafasLand.Admin.Modules.Catalog.Contracts;
-using NafasLand.Admin.Modules.Catalog.Contracts.Configuration;
 
-namespace NafasLand.Admin.Modules.Catalog.Infrastructure;
+namespace NafasLand.Admin.Shared.Infrastructure.Portal;
 
-internal sealed class PortalTokenProvider(IOptions<PortalOptions> options) : IPortalTokenProvider
+internal sealed class PortalTokenProvider(IOptions<PortalConnectionOptions> options) : IPortalTokenProvider
 {
     private readonly string _token = options.Value.BearerToken;
 

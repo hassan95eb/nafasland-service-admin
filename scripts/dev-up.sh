@@ -64,13 +64,14 @@ connection="Server=localhost,1433;Database=NafasLandAdmin;User Id=sa;Password=${
 # محیط باشد، حتی اگر مقدار واقعی migration از --connection می‌آید.
 export Database__ConnectionString="$connection"
 
-# ترتیب مهم نیست، سه ماژول اول schemaهای پایه‌اند و Catalog و Approvals بعداً اضافه شده‌اند.
+# ترتیب مهم نیست، سه ماژول اول schemaهای پایه‌اند و Catalog، Approvals و Returns بعداً اضافه شده‌اند.
 modules=(
   "src/Modules/Sample/NafasLand.Admin.Modules.Sample.csproj|NafasLand.Admin.Modules.Sample.Persistence.SampleDbContext"
   "src/Modules/Identity/NafasLand.Admin.Modules.Identity.csproj|NafasLand.Admin.Modules.Identity.Persistence.IdentityDbContext"
   "src/Modules/Auditing/NafasLand.Admin.Modules.Auditing.csproj|NafasLand.Admin.Modules.Auditing.Persistence.AuditingDbContext"
   "src/Modules/Catalog/NafasLand.Admin.Modules.Catalog.csproj|NafasLand.Admin.Modules.Catalog.Persistence.CatalogDbContext"
   "src/Modules/Approvals/NafasLand.Admin.Modules.Approvals.csproj|NafasLand.Admin.Modules.Approvals.Persistence.ApprovalsDbContext"
+  "src/Modules/Returns/NafasLand.Admin.Modules.Returns.csproj|NafasLand.Admin.Modules.Returns.Persistence.ReturnsDbContext"
 )
 
 for entry in "${modules[@]}"; do

@@ -1,0 +1,66 @@
+{
+  "success": true,
+  "order": {
+    "id": 900000001,
+    "description": null,
+    "status": ["fulfilled", "paid", "shipping_required"],
+    "quantity": 2,
+    "weight": 0,
+    "shipping": 195000,
+    "subtotal": 1400000,
+    "discount": 0,
+    "tax": 0,
+    "price": 1595000,
+    "remaining_price": 0,
+    "ip": "203.0.113.10",
+    "contact": {
+      "name": "مشتری آزمایشی",
+      "mobile": "09000000000",
+      "phone": null,
+      "email": null,
+      "country": { "id": 1, "name": "ایران", "latitude": 0, "longitude": 0 },
+      "state": { "id": 2, "name": "استان آزمایشی", "latitude": 0, "longitude": 0 },
+      "city": { "id": 3, "name": "شهر آزمایشی", "latitude": 0, "longitude": 0 },
+      "zipcode": "0000000000",
+      "address": "نشانی ساختگی",
+      "latitude": 0,
+      "longitude": 0
+    },
+    "items": [
+      {
+        "variant": { "id": 800000001, "sku": null },
+        "product": { "id": 700000001 },
+        "title": "محصول آزمایشی ۵۰ میلی‌لیتر",
+        "price": 700000,
+        "quantity": 2,
+        "weight": null,
+        "shipping": null,
+        "discount": null,
+        "sku": null,
+        "tax": null
+      }
+    ],
+    "coupons": null,
+    "shipments": null,
+    "payments": [
+      {
+        "id": 1,
+        "description": null,
+        "reference_id": "TEST-REFERENCE",
+        "type": "online",
+        "status": ["paid"],
+        "sub_status": null,
+        "amount": 1595000,
+        "created": { "date": "1405/07/02", "time": "10:06", "universal": "09/24/2026 10:06:58", "timestamp": 1790231818 },
+        "gateway": { "id": 1, "title": "درگاه آزمایشی", "type": "test", "owner": "آزمایشی" }
+      }
+    ],
+    "user": { "id": 1, "username": "test-user", "name": "مشتری آزمایشی", "nickname": null, "national_code": null, "avatar": null },
+    "label": null,
+    "shipping_class": { "id": 1, "title": "ارسال به سراسر ایران", "type": "static" },
+    "created": { "year": "1405", "month": "07", "day": "02", "date": "1405/07/02", "time": "10:06", "universal": "09/24/2026 10:06:58", "timestamp": 1790231819, "subtract": "7 ساعت پیش", "past": true },
+    "due_date": { "date": "1405/07/02", "universal": "09/24/2026 11:06:00", "timestamp": 1790235360 },
+    "delivery": null,
+    "updated": { "date": "1405/07/02", "universal": "09/24/2026 12:06:26", "timestamp": 1790238986 }
+  }
+}
