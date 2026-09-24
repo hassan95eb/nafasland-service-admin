@@ -23,7 +23,12 @@ import { LoadingOverlay } from "@/shared/ui/loading-overlay";
 import { SaveBar } from "@/shared/ui/save-bar";
 
 type NamedValue = { name: string; value: string };
-type ContentValue = NamedValue & { editor: RichTextState };
+// `key` is a stable identity for React: keying a section by its (editable) name
+// remounted the input on every keystroke and dropped focus.
+type ContentValue = NamedValue & { key: string; editor: RichTextState };
+
+let nextContentKey = 0;
+const newContentKey = () => `content-${nextContentKey++}`;
 type VariantValue = { title: string; price: string; stock: string; sku: string };
 
 export function ProductForm({ mode, product }: { mode: "create" | "edit"; product?: ProductDetail }) {
@@ -41,6 +46,7 @@ export function ProductForm({ mode, product }: { mode: "create" | "edit"; produc
   const [description, setDescription] = useState(() => createRichTextState(product?.description));
   const [contents, setContents] = useState<ContentValue[]>(() =>
     (product?.contents.length ? product.contents : [{ name: "معرفی", value: "" }]).map((item) => ({
+      key: newContentKey(),
       name: item.name,
       value: item.value ?? "",
       editor: createRichTextState(item.value),
@@ -177,18 +183,18 @@ export function ProductForm({ mode, product }: { mode: "create" | "edit"; produc
         <RichTextEditor id="description" label="توضیحات" state={description} onChange={setDescription} />
         <h2 className="font-black">بخش‌های محتوا</h2>
         {contents.map((item, index) => (
-          <div key={`${index}-${item.name}`} className="space-y-3 border-t border-[var(--border)] pt-4">
-            <Input value={item.name} aria-label="نام بخش محتوا" onChange={(event) => setContents(replaceAt(contents, index, { ...item, name: event.target.value }))} />
+          <div key={item.key} className="space-y-3 border-t border-[var(--border)] pt-4">
+            <Input value={item.name} aria-label="نام بخش محتوا" onChange={(event) => { const name = event.target.value; setContents((current) => current.map((entry) => entry.key === item.key ? { ...entry, name } : entry)); }} />
             <RichTextEditor
               id={`content-${index}`}
               label={`محتوای ${item.name || index + 1}`}
               state={item.editor}
-              onChange={(editor) => setContents(replaceAt(contents, index, { ...item, editor }))}
+              onChange={(editor) => setContents((current) => current.map((entry) => entry.key === item.key ? { ...entry, editor } : entry))}
             />
             <Button type="button" variant="ghost" onClick={() => setContents(removeAt(contents, index))}>حذف بخش</Button>
           </div>
         ))}
-        <Button type="button" variant="secondary" onClick={() => setContents([...contents, { name: "", value: "", editor: createRichTextState("") }])}>افزودن بخش</Button>
+        <Button type="button" variant="secondary" onClick={() => setContents([...contents, { key: newContentKey(), name: "", value: "", editor: createRichTextState("") }])}>افزودن بخش</Button>
       </section>
 
       <NamedValuesEditor title="فیلدهای محصول" values={fields} onChange={setFields} />
