@@ -31,5 +31,5 @@ internal static class CatalogApprovalGuard
         IsTestProduct(productId, options) ? null : Result.Failure(Message);
 
     private static bool IsTestProduct(string productId, PortalOptions options) =>
-        string.Equals(productId, options.TestProductId, StringComparison.Ordinal);
+        options.IsWriteAllowed(productId);
 }

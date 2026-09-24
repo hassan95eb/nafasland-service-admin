@@ -39,4 +39,22 @@ public sealed class PortalOptionsTests
     {
         Assert.False(new PortalOptions().AllowProductCreation);
     }
+
+    [Fact]
+    public void محافظ_محصول_تستی_به_صورت_پیش‌فرض_فعال_است()
+    {
+        var options = new PortalOptions { TestProductId = "101" };
+
+        Assert.True(options.RestrictWritesToTestProduct);
+        Assert.True(options.IsWriteAllowed("101"));
+        Assert.False(options.IsWriteAllowed("202"));
+    }
+
+    [Fact]
+    public void با_خاموش_کردن_محافظ_نوشتن_روی_هر_محصولی_مجاز_است()
+    {
+        var options = new PortalOptions { TestProductId = "101", RestrictWritesToTestProduct = false };
+
+        Assert.True(options.IsWriteAllowed("202"));
+    }
 }

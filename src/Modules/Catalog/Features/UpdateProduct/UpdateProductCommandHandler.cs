@@ -25,7 +25,7 @@ internal sealed class UpdateProductCommandHandler(
 
         auditContext.SetBefore(current);
 
-        if (!string.Equals(current.Id, portalOptions.Value.TestProductId, StringComparison.Ordinal))
+        if (!portalOptions.Value.IsWriteAllowed(current.Id))
         {
             throw new AuthorizationDeniedException(
                 "محافظ محیط توسعه فقط اجازهٔ نوشتن روی محصول تستی تعیین‌شده را می‌دهد.");

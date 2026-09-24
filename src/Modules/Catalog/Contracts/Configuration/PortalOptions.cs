@@ -44,4 +44,15 @@ public sealed class PortalOptions
     public string TestProductId { get; init; } = string.Empty;
 
     public bool AllowProductCreation { get; init; }
+
+    /// <summary>
+    /// ADR-029 guard: when true (the default), every write is limited to
+    /// <see cref="TestProductId"/>. Setting it to false opens writes to every
+    /// product on the portal, so it must be turned off explicitly and only
+    /// where editing live products is intended.
+    /// </summary>
+    public bool RestrictWritesToTestProduct { get; init; } = true;
+
+    public bool IsWriteAllowed(string? productId) =>
+        !RestrictWritesToTestProduct || string.Equals(productId, TestProductId, StringComparison.Ordinal);
 }
