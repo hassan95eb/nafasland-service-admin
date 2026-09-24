@@ -44,6 +44,8 @@
       live inside ApprovalsModule.RegisterServices).
     -->
     <ProjectReference Include="..\Modules\Approvals\NafasLand.Admin.Modules.Approvals.csproj" />
+    <!-- Only for assembly discovery (ADR-005); Api never references Returns' types directly. -->
+    <ProjectReference Include="..\Modules\Returns\NafasLand.Admin.Modules.Returns.csproj" />
   </ItemGroup>
 
 </Project>

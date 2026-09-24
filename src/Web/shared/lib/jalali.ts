@@ -1,5 +1,5 @@
 // Jalali ↔ Gregorian conversion (the standard jalaali algorithm), so the
-// report's date filters take Persian dates (ADR-035) without a new dependency.
+// panel's date inputs take Persian dates (ADR-035) without a new dependency.
 
 function div(a: number, b: number) {
   return Math.trunc(a / b);

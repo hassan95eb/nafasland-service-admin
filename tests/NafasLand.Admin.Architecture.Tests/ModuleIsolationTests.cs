@@ -89,4 +89,19 @@ public sealed class ModuleIsolationTests
             catalog.GetReferencedAssemblies(),
             reference => reference.Name == "NafasLand.Admin.Modules.Auditing");
     }
+
+    /// <summary>
+    /// ADR-054: Returns reaches Approvals only through the keyed
+    /// IApprovalExecutor and the portal only through Shared.Infrastructure's
+    /// shared client — no compiled-in dependency on any other module.
+    /// </summary>
+    [Fact]
+    public void Returns_به_هیچ_ماژول_دیگری_وابستگی_اسمبلی_ندارد()
+    {
+        var returns = System.Reflection.Assembly.Load("NafasLand.Admin.Modules.Returns");
+
+        Assert.DoesNotContain(
+            returns.GetReferencedAssemblies(),
+            reference => reference.Name!.StartsWith("NafasLand.Admin.Modules.", StringComparison.Ordinal));
+    }
 }

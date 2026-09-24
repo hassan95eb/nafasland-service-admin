@@ -9,6 +9,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="Serilog" />
+    <!-- Shared portal HttpClient pipeline (ADR-050, moved from Catalog by ADR-054) -->
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,6 +22,7 @@
     <InternalsVisibleTo Include="NafasLand.Admin.Modules.Sample.Tests" />
     <InternalsVisibleTo Include="NafasLand.Admin.Modules.Auditing.Tests" />
     <InternalsVisibleTo Include="NafasLand.Admin.Modules.Catalog.Tests" />
+    <InternalsVisibleTo Include="NafasLand.Admin.Modules.Returns.Tests" />
   </ItemGroup>
 
 </Project>

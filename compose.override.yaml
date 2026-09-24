@@ -33,6 +33,8 @@ services:
       - catalog-bin:/src/src/Modules/Catalog/bin
       - approvals-obj:/src/src/Modules/Approvals/obj
       - approvals-bin:/src/src/Modules/Approvals/bin
+      - returns-obj:/src/src/Modules/Returns/obj
+      - returns-bin:/src/src/Modules/Returns/bin
 
   web:
     build:
@@ -64,5 +66,7 @@ volumes:
   catalog-bin:
   approvals-obj:
   approvals-bin:
+  returns-obj:
+  returns-bin:
   web-node-modules:
   web-next:

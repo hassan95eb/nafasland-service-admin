@@ -58,7 +58,13 @@ internal sealed class ApprovalExecutionCoordinator(
         Guid reviewerUserId,
         CancellationToken cancellationToken)
     {
-        var context = new ApprovalContext(request.Id, reviewerUserId, request.RequestedByUserId, correlationIdAccessor.CorrelationId);
+        var context = new ApprovalContext(
+            request.Id,
+            reviewerUserId,
+            request.RequestedByUserId,
+            correlationIdAccessor.CorrelationId,
+            request.RequestedAt,
+            request.ReviewedAt ?? UtcNow);
         try
         {
             return await executor.ExecuteAsync(request.PayloadJson, context, cancellationToken);

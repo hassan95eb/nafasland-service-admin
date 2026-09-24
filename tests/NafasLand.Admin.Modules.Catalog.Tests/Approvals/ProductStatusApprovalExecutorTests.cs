@@ -48,5 +48,5 @@ public sealed class ProductStatusApprovalExecutorTests
             executor.ExecuteAsync("{\"productId\":\"101\",\"statusKey\":\"sale\"}", Context(), CancellationToken.None));
     }
 
-    private static ApprovalContext Context() => new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "correlation-id");
+    private static ApprovalContext Context() => new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "correlation-id", DateTime.UtcNow, DateTime.UtcNow);
 }

@@ -1,22 +1,15 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using NafasLand.Admin.Modules.Catalog.Contracts;
 using NafasLand.Admin.Modules.Catalog.Contracts.Models;
-using NafasLand.Admin.Shared.Infrastructure.CorrelationId;
+using NafasLand.Admin.Shared.Infrastructure.Portal;
 using NafasLand.Admin.Shared.Kernel.Errors;
-using Polly;
-using Polly.CircuitBreaker;
-using Polly.Timeout;
 
 namespace NafasLand.Admin.Modules.Catalog.Infrastructure;
 
-internal sealed class PortalProductClient(
-    HttpClient httpClient,
-    IPortalTokenProvider tokenProvider,
-    ICorrelationIdAccessor correlationIdAccessor) : IPortalProductClient
+internal sealed class PortalProductClient(HttpClient httpClient) : IPortalProductClient
 {
     private static readonly JsonSerializerOptions PatchSerializerOptions = new(JsonSerializerDefaults.Web)
     {
@@ -218,53 +211,11 @@ internal sealed class PortalProductClient(
         CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(method, relativeUrl) { Content = content };
-        var token = await tokenProvider.GetTokenAsync(cancellationToken);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        request.Headers.TryAddWithoutValidation("X-Correlation-Id", correlationIdAccessor.CorrelationId);
-
-        try
-        {
-            return await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        }
-        catch (PortalBusyException)
-        {
-            throw;
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception exception) when (
-            exception is HttpRequestException
-            or TimeoutRejectedException
-            or BrokenCircuitException
-            or ExecutionRejectedException)
-        {
-            throw new PortalUnavailableException(exception);
-        }
+        return await PortalHttp.SendAsync(httpClient, request, cancellationToken);
     }
 
-    private static void EnsureSuccessfulPortalResponse(HttpResponseMessage response, string json)
-    {
-        if (!response.IsSuccessStatusCode || IsExplicitPortalFailure(json))
-        {
-            throw new PortalUnavailableException();
-        }
-    }
-
-    private static bool IsExplicitPortalFailure(string json)
-    {
-        try
-        {
-            using var document = JsonDocument.Parse(json);
-            return document.RootElement.TryGetProperty("success", out var success)
-                && success.ValueKind == JsonValueKind.False;
-        }
-        catch (JsonException)
-        {
-            return false;
-        }
-    }
+    private static void EnsureSuccessfulPortalResponse(HttpResponseMessage response, string json) =>
+        PortalHttp.EnsureSuccess(response, json);
 
     private static void AddQueryParameter(List<string> parameters, string name, string? value)
     {

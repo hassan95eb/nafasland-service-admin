@@ -1,4 +1,4 @@
-namespace NafasLand.Admin.Modules.Catalog.Infrastructure;
+namespace NafasLand.Admin.Shared.Infrastructure.Portal;
 
 internal sealed class PortalRateLimitingHandler(PortalRateLimiter rateLimiter) : DelegatingHandler
 {

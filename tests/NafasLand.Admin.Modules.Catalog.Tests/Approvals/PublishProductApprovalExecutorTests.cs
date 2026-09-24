@@ -50,5 +50,5 @@ public sealed class PublishProductApprovalExecutorTests
         Assert.Equal(0, portal.UpdateProductCallCount);
     }
 
-    private static ApprovalContext Context() => new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "correlation-id");
+    private static ApprovalContext Context() => new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "correlation-id", DateTime.UtcNow, DateTime.UtcNow);
 }

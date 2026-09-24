@@ -14,6 +14,7 @@ using NafasLand.Admin.Modules.Catalog.Contracts;
 using NafasLand.Admin.Modules.Identity.Contracts;
 using NafasLand.Admin.Shared.Infrastructure.Configuration;
 using NafasLand.Admin.Shared.Infrastructure.Extensions;
+using NafasLand.Admin.Shared.Infrastructure.Portal;
 using NafasLand.Admin.Shared.Kernel.Persistence;
 using Serilog;
 using Serilog.Events;
@@ -27,6 +28,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services
     .AddOptions<DatabaseOptions>()
     .Bind(builder.Configuration.GetSection(DatabaseOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+// Two classes over the same "Portal" section (ADR-054): the shared connection
+// part every portal client uses, and Catalog's own keys (TestProductId, ...).
+builder.Services
+    .AddOptions<PortalConnectionOptions>()
+    .Bind(builder.Configuration.GetSection(PortalConnectionOptions.SectionName))
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
@@ -149,6 +158,7 @@ var app = builder.Build();
 // ValidateOnStart, just without an explicit call here — Api has no way to name
 // an internal type from another assembly.
 _ = app.Services.GetRequiredService<IOptions<DatabaseOptions>>().Value;
+_ = app.Services.GetRequiredService<IOptions<PortalConnectionOptions>>().Value;
 _ = app.Services.GetRequiredService<IOptions<PortalOptions>>().Value;
 _ = app.Services.GetRequiredService<IOptions<LoggingOptions>>().Value;
 

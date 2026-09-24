@@ -30,6 +30,7 @@ const requestTypeLabels: Record<string, string> = {
   "catalog.product.publish": "انتشار/لغو انتشار محصول",
   "catalog.product.status": "تغییر ویژه/پرفروش‌ترین",
   "catalog.variant.delete": "حذف واریانت",
+  "returns.register": "ثبت مرجوعی",
 };
 
 export function requestTypeLabel(requestType: string) {

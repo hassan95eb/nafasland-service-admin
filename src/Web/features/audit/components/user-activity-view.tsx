@@ -8,7 +8,8 @@ import { AuditEventDetail } from "@/features/audit/components/audit-event-detail
 import { AuditLimitationNotice } from "@/features/audit/components/audit-limitation-notice";
 import { AuditLogTable } from "@/features/audit/components/audit-log-table";
 import { useUserActivity } from "@/features/audit/hooks/use-audit";
-import { jalaliDaysAgo, parseAuditFilters, parseJalaliDate, serializeAuditFilters, todayJalali } from "@/features/audit/lib/audit-filters";
+import { parseAuditFilters, serializeAuditFilters } from "@/features/audit/lib/audit-filters";
+import { jalaliDaysAgo, parseJalaliDate, todayJalali } from "@/shared/lib/jalali-date";
 import { actionLabel, actorDisplayName, outcomeLabel, summarizeActivity } from "@/features/audit/lib/audit-labels";
 import { presentApiError } from "@/shared/lib/api-client";
 import { formatPersianNumber } from "@/shared/lib/formatters";

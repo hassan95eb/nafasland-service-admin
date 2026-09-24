@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using NafasLand.Admin.Modules.Catalog.Contracts.Configuration;
+using NafasLand.Admin.Shared.Infrastructure.Portal;
 
 namespace NafasLand.Admin.Modules.Catalog.Tests.Configuration;
 
@@ -8,10 +9,9 @@ public sealed class PortalOptionsTests
     [Fact]
     public void نبودن_توکن_اعتبارسنجی_کانفیگ_را_رد_می‌کند()
     {
-        var options = new PortalOptions
+        var options = new PortalConnectionOptions
         {
             BaseUrl = "https://portal.invalid/site/api/v1/manage",
-            TestProductId = "101",
         };
         var validationResults = new List<ValidationResult>();
 
@@ -22,7 +22,7 @@ public sealed class PortalOptionsTests
             validateAllProperties: true);
 
         Assert.False(isValid);
-        Assert.Contains(validationResults, result => result.MemberNames.Contains(nameof(PortalOptions.BearerToken)));
+        Assert.Contains(validationResults, result => result.MemberNames.Contains(nameof(PortalConnectionOptions.BearerToken)));
     }
 
     [Fact]

@@ -24,3 +24,8 @@ test("«درخواست‌های من» بدون هیچ permission ای برای 
 test("«کارتابل تأیید» فقط برای approvals.read.all نمایش داده می‌شود", () => {
   assert.deepEqual(filterNavItems(["approvals.read.all"]).map((item) => item.href), ["/approvals", "/approvals/review"]);
 });
+
+test("«مرجوعی‌ها» فقط برای returns.request نمایش داده می‌شود (ADR-054)", () => {
+  assert.deepEqual(filterNavItems(["returns.request"]).map((item) => item.href), ["/returns", "/approvals"]);
+  assert.deepEqual(filterNavItems(["returns.read.all"]).map((item) => item.href), ["/approvals"]);
+});
