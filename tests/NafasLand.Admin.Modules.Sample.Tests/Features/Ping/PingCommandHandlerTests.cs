@@ -18,6 +18,10 @@ public sealed class PingCommandHandlerTests
         {
         }
 
+        public void SetParentEntity(string entityType, string entityId)
+        {
+        }
+
         public void SetBefore(object? snapshot)
         {
         }

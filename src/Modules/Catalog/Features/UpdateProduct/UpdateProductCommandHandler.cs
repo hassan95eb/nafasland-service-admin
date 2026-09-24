@@ -14,7 +14,8 @@ internal sealed class UpdateProductCommandHandler(
     IOptions<PortalOptions> portalOptions,
     IProductHtmlSanitizer htmlSanitizer,
     ProductCache cache,
-    IAuditContext auditContext)
+    IAuditContext auditContext,
+    IProductRefWriter productRefWriter)
     : ICommandHandler<UpdateProductCommand, UpdateProductResult>
 {
     public async Task<UpdateProductResult> HandleAsync(UpdateProductCommand command, CancellationToken cancellationToken)
@@ -69,6 +70,13 @@ internal sealed class UpdateProductCommandHandler(
 
         auditContext.SetAfter(actual);
         cache.InvalidateProduct(command.ProductId);
+
+        // ADR-009's ProductRef, from what the portal actually stored.
+        if (!string.IsNullOrWhiteSpace(actual.Title))
+        {
+            await productRefWriter.UpsertAsync(actual.Id, actual.Title, cancellationToken);
+        }
+
         return new UpdateProductResult(actual.Id, actual.Version, actual.Title);
     }
 

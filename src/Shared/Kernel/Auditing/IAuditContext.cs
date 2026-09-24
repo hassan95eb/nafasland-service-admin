@@ -12,6 +12,9 @@ public interface IAuditContext
 {
     void SetEntityId(string entityId);
 
+    /// <summary>The entity whose history this record also belongs to, e.g. the Product that owns a changed ProductVariant.</summary>
+    void SetParentEntity(string entityType, string entityId);
+
     /// <summary>Serialized with System.Text.Json. Omit entirely for a Create operation, which has no "before".</summary>
     void SetBefore(object? snapshot);
 

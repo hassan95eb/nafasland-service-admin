@@ -47,6 +47,11 @@ internal sealed class UpdateVariantPriceAndInventoryCommandHandler(
         }
 
         auditContext.SetEntityId(command.VariantId);
+        if (!string.IsNullOrEmpty(current.ProductId))
+        {
+            // Lets the per-product history (ADR-014, view 4) find this variant change.
+            auditContext.SetParentEntity("Product", current.ProductId);
+        }
         auditContext.SetBefore(new { price = current.Price, stock = current.Stock });
 
         await portalClient.UpdateVariantAsync(

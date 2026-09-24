@@ -24,6 +24,7 @@ using NafasLand.Admin.Shared.Kernel.Messaging;
 using NafasLand.Admin.Shared.Kernel.Modules;
 using NafasLand.Admin.Shared.Kernel.Persistence;
 using NafasLand.Admin.Shared.Kernel.Permissions;
+using NafasLand.Admin.Shared.Kernel.Users;
 
 namespace NafasLand.Admin.Modules.Identity;
 
@@ -56,6 +57,7 @@ internal sealed class IdentityModule : IModule
 
         services.AddScoped<IPasswordHasher, Argon2PasswordHasher>();
         services.AddScoped<IEffectivePermissionsProvider, EffectivePermissionsProvider>();
+        services.AddScoped<IUserDirectory, UserDirectory>();
         services.AddScoped<IIdentityBootstrapper, IdentityBootstrapper>();
 
         services.AddScoped<IValidator<LoginCommand>, LoginCommandValidator>();

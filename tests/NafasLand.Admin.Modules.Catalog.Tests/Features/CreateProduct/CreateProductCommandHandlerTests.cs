@@ -52,6 +52,29 @@ public sealed class CreateProductCommandHandlerTests
     }
 
     [Fact]
+    public async Task ایجاد_موفق_ProductRef_را_با_عنوان_ذخیره‌شده_در_پرتال_ثبت_می‌کند()
+    {
+        var portal = new FakePortalProductClient();
+        var productRefWriter = new RecordingProductRefWriter();
+        var handler = CreateHandler(portal, allowCreation: true, new CapturingAuditContext(), productRefWriter);
+
+        await handler.HandleAsync(CreateCommand(), CancellationToken.None);
+
+        Assert.Equal(("202", "محصول تازه"), Assert.Single(productRefWriter.Upserts));
+    }
+
+    [Fact]
+    public async Task ایجاد_ردشده_توسط_محافظ_ProductRef_نمی‌سازد()
+    {
+        var productRefWriter = new RecordingProductRefWriter();
+        var handler = CreateHandler(new FakePortalProductClient(), allowCreation: false, new CapturingAuditContext(), productRefWriter);
+
+        await Assert.ThrowsAsync<BusinessRuleException>(() => handler.HandleAsync(CreateCommand(), CancellationToken.None));
+
+        Assert.Empty(productRefWriter.Upserts);
+    }
+
+    [Fact]
     public void command_از_permission_idempotency_و_audit_استفاده_می‌کند()
     {
         var command = CreateCommand();
@@ -94,12 +117,14 @@ public sealed class CreateProductCommandHandlerTests
     private static CreateProductCommandHandler CreateHandler(
         FakePortalProductClient portal,
         bool allowCreation,
-        CapturingAuditContext audit) => new(
+        CapturingAuditContext audit,
+        RecordingProductRefWriter? productRefWriter = null) => new(
         portal,
         Options.Create(new PortalOptions { TestProductId = "101", AllowProductCreation = allowCreation }),
         new ProductHtmlSanitizer(),
         new ProductCache(TimeProvider.System),
-        audit);
+        audit,
+        productRefWriter ?? new RecordingProductRefWriter());
 
     private static CreateProductCommand CreateCommand() => new(
         "محصول تازه",
@@ -124,6 +149,7 @@ public sealed class CreateProductCommandHandlerTests
         public string? EntityId { get; private set; }
         public object? After { get; private set; }
         public void SetEntityId(string entityId) => EntityId = entityId;
+        public void SetParentEntity(string entityType, string entityId) { }
         public void SetBefore(object? snapshot) { }
         public void SetAfter(object? snapshot) => After = snapshot;
     }

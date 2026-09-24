@@ -5,6 +5,7 @@ using NafasLand.Admin.Modules.Auditing.Configuration;
 using NafasLand.Admin.Modules.Auditing.Features.Queries;
 using NafasLand.Admin.Modules.Auditing.Jobs;
 using NafasLand.Admin.Modules.Auditing.Persistence;
+using NafasLand.Admin.Shared.Kernel.Users;
 using NafasLand.Admin.Shared.Kernel.Auditing;
 using NafasLand.Admin.Shared.Kernel.Messaging;
 
@@ -15,6 +16,7 @@ internal sealed class ExportAuditLogCommandHandler(
     IAuditContext auditContext,
     IBackgroundJobClient backgroundJobClient,
     IOptions<AuditExportOptions> exportOptions,
+    IUserDirectory userDirectory,
     TimeProvider timeProvider)
     : ICommandHandler<ExportAuditLogCommand, ExportAuditLogResult>
 {
@@ -28,7 +30,8 @@ internal sealed class ExportAuditLogCommandHandler(
         if (matchingCount <= exportOptions.Value.SynchronousRowThreshold)
         {
             var rows = await query.OrderByDescending(log => log.CreatedAt).ToListAsync(cancellationToken);
-            var (bytes, contentType, fileName) = AuditLogFileGenerator.Generate(rows, command.Format);
+            var usernames = await userDirectory.GetUsernamesAsync(ActorIds(rows), cancellationToken);
+            var (bytes, contentType, fileName) = AuditLogFileGenerator.Generate(rows, usernames, command.Format);
             return new ExportAuditLogResult(IsAsync: false, bytes, contentType, fileName, JobId: null);
         }
 
@@ -41,4 +44,7 @@ internal sealed class ExportAuditLogCommandHandler(
 
         return new ExportAuditLogResult(IsAsync: true, FileBytes: null, ContentType: null, FileName: null, job.Id);
     }
+
+    internal static IReadOnlyCollection<Guid> ActorIds(IEnumerable<AuditLog> rows) =>
+        rows.Where(log => log.ActorUserId.HasValue).Select(log => log.ActorUserId!.Value).Distinct().ToList();
 }

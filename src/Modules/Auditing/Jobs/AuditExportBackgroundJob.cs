@@ -3,6 +3,7 @@ using NafasLand.Admin.Modules.Auditing.Configuration;
 using NafasLand.Admin.Modules.Auditing.Features.ExportAuditLog;
 using NafasLand.Admin.Modules.Auditing.Features.Queries;
 using NafasLand.Admin.Modules.Auditing.Persistence;
+using NafasLand.Admin.Shared.Kernel.Users;
 
 namespace NafasLand.Admin.Modules.Auditing.Jobs;
 
@@ -12,7 +13,7 @@ namespace NafasLand.Admin.Modules.Auditing.Jobs;
 /// it already produced its own AuditExported record the moment it enqueued this
 /// job (ADR-014); this job only has to produce the file.
 /// </summary>
-internal sealed class AuditExportBackgroundJob(AuditingDbContext dbContext, TimeProvider timeProvider)
+internal sealed class AuditExportBackgroundJob(AuditingDbContext dbContext, IUserDirectory userDirectory, TimeProvider timeProvider)
 {
     public async Task RunAsync(Guid jobId, AuditLogFilter filter, string format, CancellationToken cancellationToken)
     {
@@ -28,7 +29,8 @@ internal sealed class AuditExportBackgroundJob(AuditingDbContext dbContext, Time
                 .OrderByDescending(log => log.CreatedAt)
                 .ToListAsync(cancellationToken);
 
-            var (bytes, _, fileName) = AuditLogFileGenerator.Generate(rows, format);
+            var usernames = await userDirectory.GetUsernamesAsync(ExportAuditLogCommandHandler.ActorIds(rows), cancellationToken);
+            var (bytes, _, fileName) = AuditLogFileGenerator.Generate(rows, usernames, format);
 
             Directory.CreateDirectory(AuditFilePaths.ExportDirectory);
             var filePath = Path.Combine(AuditFilePaths.ExportDirectory, $"{jobId}-{fileName}");

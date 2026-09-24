@@ -65,7 +65,9 @@ internal sealed class AuditBehavior<TCommand, TResponse>(
             UpstreamStatus: null,
             FailureReason: failureReason,
             IpAddress: ipAddress,
-            UserAgent: userAgent);
+            UserAgent: userAgent,
+            ParentEntityType: auditContext.ParentEntityType,
+            ParentEntityId: auditContext.ParentEntityId);
 
         return auditLogWriter.WriteAsync(entry, cancellationToken);
     }

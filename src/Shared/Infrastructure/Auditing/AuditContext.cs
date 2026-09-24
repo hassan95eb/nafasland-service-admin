@@ -16,11 +16,21 @@ internal sealed class AuditContext : IAuditContext
 {
     public string? EntityId { get; private set; }
 
+    public string? ParentEntityType { get; private set; }
+
+    public string? ParentEntityId { get; private set; }
+
     public string? BeforeJson { get; private set; }
 
     public string? AfterJson { get; private set; }
 
     public void SetEntityId(string entityId) => EntityId = entityId;
+
+    public void SetParentEntity(string entityType, string entityId)
+    {
+        ParentEntityType = entityType;
+        ParentEntityId = entityId;
+    }
 
     public void SetBefore(object? snapshot) => BeforeJson = Serialize(snapshot);
 

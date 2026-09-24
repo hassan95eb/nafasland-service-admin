@@ -118,6 +118,14 @@ namespace NafasLand.Admin.Modules.Auditing.Persistence.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
 
+                    b.Property<string>("ParentEntityId")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("ParentEntityType")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<int?>("UpstreamStatus")
                         .HasColumnType("int");
 
@@ -131,6 +139,9 @@ namespace NafasLand.Admin.Modules.Auditing.Persistence.Migrations
                         .IsDescending(false, true);
 
                     b.HasIndex("EntityType", "EntityId", "CreatedAt")
+                        .IsDescending(false, false, true);
+
+                    b.HasIndex("ParentEntityType", "ParentEntityId", "CreatedAt")
                         .IsDescending(false, false, true);
 
                     b.ToTable("AuditLogs", "audit");

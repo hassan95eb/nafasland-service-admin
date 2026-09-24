@@ -44,7 +44,8 @@ function isMutation(method: string) {
   return !["GET", "HEAD", "OPTIONS"].includes(method.toUpperCase());
 }
 
-export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+/** Same headers, antiforgery and error handling as apiFetch, for a caller that needs the raw response (e.g. a file download). */
+export async function apiFetchResponse(path: string, init: RequestInit = {}): Promise<Response> {
   const method = init.method ?? "GET";
   const headers = new Headers(init.headers);
 
@@ -79,6 +80,12 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
       (response.status === 401 ? "نام کاربری یا رمز عبور درست نیست." : "در ارتباط با سرور مشکلی پیش آمد.");
     throw new ApiError(message, response.status, problem.correlationId);
   }
+
+  return response;
+}
+
+export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const response = await apiFetchResponse(path, init);
 
   if (response.status === 204 || response.headers.get("content-length") === "0") {
     return undefined as T;

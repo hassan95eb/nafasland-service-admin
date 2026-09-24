@@ -23,9 +23,14 @@ internal sealed class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
         builder.Property(log => log.IpAddress).HasMaxLength(64);
         builder.Property(log => log.UserAgent).HasMaxLength(500);
         builder.Property(log => log.CreatedAt).IsRequired();
+        builder.Property(log => log.ParentEntityType).HasMaxLength(100);
+        builder.Property(log => log.ParentEntityId).HasMaxLength(200);
 
         // ADR-014's two required indexes, CreatedAt DESC as specified.
         builder.HasIndex(log => new { log.ActorUserId, log.CreatedAt }).IsDescending(false, true);
         builder.HasIndex(log => new { log.EntityType, log.EntityId, log.CreatedAt }).IsDescending(false, false, true);
+
+        // Same shape, for per-entity history reaching child records (a product's variant changes).
+        builder.HasIndex(log => new { log.ParentEntityType, log.ParentEntityId, log.CreatedAt }).IsDescending(false, false, true);
     }
 }

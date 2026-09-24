@@ -22,7 +22,7 @@ public sealed class ExportAuditLogCommandHandlerTests
         int synchronousRowThreshold)
     {
         var options = Options.Create(new AuditExportOptions { SynchronousRowThreshold = synchronousRowThreshold });
-        return new ExportAuditLogCommandHandler(dbContext, auditContext, backgroundJobClient, options, TimeProvider.System);
+        return new ExportAuditLogCommandHandler(dbContext, auditContext, backgroundJobClient, options, new FakeUserDirectory(), TimeProvider.System);
     }
 
     [Fact]

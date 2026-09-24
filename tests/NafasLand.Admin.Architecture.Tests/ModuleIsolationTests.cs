@@ -73,4 +73,20 @@ public sealed class ModuleIsolationTests
             }
         }
     }
+
+    /// <summary>
+    /// Catalog writes ProductRef and parent-entity audit data through Kernel
+    /// contracts (IProductRefWriter, IAuditContext) only — the project-reference
+    /// check above would already catch a csproj reference; this also catches a
+    /// compiled-in dependency on the Auditing assembly.
+    /// </summary>
+    [Fact]
+    public void Catalog_هیچ_وابستگی_اسمبلی_به_Auditing_ندارد()
+    {
+        var catalog = System.Reflection.Assembly.Load("NafasLand.Admin.Modules.Catalog");
+
+        Assert.DoesNotContain(
+            catalog.GetReferencedAssemblies(),
+            reference => reference.Name == "NafasLand.Admin.Modules.Auditing");
+    }
 }
