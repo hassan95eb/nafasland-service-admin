@@ -448,6 +448,7 @@ curl -s -X POST "http://localhost:8080/api/v1/approvals/<id>/approval" \
 | `PORTAL__BEARERTOKEN` | توکن سرویس‌اکانت؛ فقط در بک‌اند نگهداری می‌شود و نباید لاگ شود |
 | `PORTAL__TESTPRODUCTID` | شناسهٔ محصول تستی برای آزمایش دستی خواندن |
 | `PORTAL__ALLOWPRODUCTCREATION` | محافظ ایجاد واقعی محصول؛ پیش‌فرض `false` و برای فعال‌سازی باید صریحاً `true` شود |
+| `PORTAL__RESTRICTWRITESTOTESTPRODUCT` | محافظ ADR-029؛ پیش‌فرض `true` یعنی هر نوشتن (ویرایش، قیمت/موجودی، حذف، انتشار) فقط روی `PORTAL__TESTPRODUCTID` مجاز است. با `false` نوشتن روی همهٔ محصولات واقعی باز می‌شود |
 | `PORTAL__RATELIMITPERSECOND` | نرخ هدف سراسری؛ پیش‌فرض ۱.۵ درخواست در ثانیه |
 | `PORTAL__RATELIMITQUEUECAPACITY` | ظرفیت صف درخواست‌های پرتال؛ پیش‌فرض ۲۰ |
 | `PORTAL__RATELIMITQUEUETIMEOUTSECONDS` | بیشینهٔ انتظار در صف؛ پیش‌فرض ۱۵ ثانیه |

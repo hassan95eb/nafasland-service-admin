@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
@@ -11,6 +9,7 @@ COPY src/Modules/Sample/NafasLand.Admin.Modules.Sample.csproj src/Modules/Sample
 COPY src/Modules/Identity/NafasLand.Admin.Modules.Identity.csproj src/Modules/Identity/
 COPY src/Modules/Auditing/NafasLand.Admin.Modules.Auditing.csproj src/Modules/Auditing/
 COPY src/Modules/Catalog/NafasLand.Admin.Modules.Catalog.csproj src/Modules/Catalog/
+COPY src/Modules/Approvals/NafasLand.Admin.Modules.Approvals.csproj src/Modules/Approvals/
 RUN dotnet restore src/Api/NafasLand.Admin.Api.csproj
 
 COPY src/ src/

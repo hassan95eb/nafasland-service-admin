@@ -24,7 +24,7 @@ internal sealed class UpdateVariantPriceAndInventoryCommandHandler(
             throw ValidationError("VariantId", "واریانت در پرتال پیدا نشد.");
         }
 
-        if (!string.Equals(current.ProductId, portalOptions.Value.TestProductId, StringComparison.Ordinal))
+        if (!portalOptions.Value.IsWriteAllowed(current.ProductId))
         {
             throw new AuthorizationDeniedException(
                 "محافظ محیط توسعه فقط اجازهٔ نوشتن روی محصول تستی تعیین‌شده را می‌دهد.");

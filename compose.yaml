@@ -33,6 +33,8 @@ services:
       Portal__RateLimitPerSecond: ${PORTAL__RATELIMITPERSECOND:-1.5}
       Portal__RateLimitQueueCapacity: ${PORTAL__RATELIMITQUEUECAPACITY:-20}
       Portal__RateLimitQueueTimeoutSeconds: ${PORTAL__RATELIMITQUEUETIMEOUTSECONDS:-15}
+      Portal__AllowProductCreation: ${PORTAL__ALLOWPRODUCTCREATION:-false}
+      Portal__RestrictWritesToTestProduct: ${PORTAL__RESTRICTWRITESTOTESTPRODUCT:-true}
       Identity__SuperAdmin__Username: ${IDENTITY__SUPERADMIN__USERNAME:?نام کاربری سوپرادمین در .env تعریف نشده است}
       Identity__SuperAdmin__Password: ${IDENTITY__SUPERADMIN__PASSWORD:?رمز اولیهٔ سوپرادمین در .env تعریف نشده است}
     volumes:

@@ -31,6 +31,8 @@ services:
       - auditing-bin:/src/src/Modules/Auditing/bin
       - catalog-obj:/src/src/Modules/Catalog/obj
       - catalog-bin:/src/src/Modules/Catalog/bin
+      - approvals-obj:/src/src/Modules/Approvals/obj
+      - approvals-bin:/src/src/Modules/Approvals/bin
 
   web:
     build:
@@ -60,5 +62,7 @@ volumes:
   auditing-bin:
   catalog-obj:
   catalog-bin:
+  approvals-obj:
+  approvals-bin:
   web-node-modules:
   web-next:
