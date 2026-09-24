@@ -10,7 +10,9 @@ internal sealed class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
         builder.ToTable("AuditLogs");
         builder.HasKey(log => log.Id);
 
-        builder.Property(log => log.CorrelationId).HasMaxLength(64).IsRequired();
+        // Wider than a bare request id (max 64, CorrelationIdMiddleware): Approvals
+        // appends ":approval:<ApprovalRequestId>" to carry the request id (ADR-010).
+        builder.Property(log => log.CorrelationId).HasMaxLength(128).IsRequired();
         builder.Property(log => log.ActorRoleAtTime).HasMaxLength(200).IsRequired();
         builder.Property(log => log.Action).HasMaxLength(100).IsRequired();
         builder.Property(log => log.EntityType).HasMaxLength(100);
