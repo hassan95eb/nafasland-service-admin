@@ -25,7 +25,7 @@ internal sealed class DeleteProductApprovalExecutor(IPortalProductClient portalC
         CatalogApprovalGuard.EnsureTestProduct(payload.ProductId, portalOptions.Value);
 
         var product = await portalClient.GetProductAsync(payload.ProductId, cancellationToken)
-            ?? throw new ResourceNotFoundException("محصول در پرتال پیدا نشد.");
+            ?? throw new ResourceNotFoundException("محصول در نفس‌لند پیدا نشد.");
 
         return new ApprovalPreview(product.Title ?? payload.ProductId,
         [

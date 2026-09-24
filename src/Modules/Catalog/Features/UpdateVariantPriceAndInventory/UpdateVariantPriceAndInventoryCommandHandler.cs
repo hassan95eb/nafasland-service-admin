@@ -21,7 +21,7 @@ internal sealed class UpdateVariantPriceAndInventoryCommandHandler(
         var current = await portalClient.GetVariantAsync(command.VariantId, cancellationToken);
         if (current is null)
         {
-            throw ValidationError("VariantId", "واریانت در پرتال پیدا نشد.");
+            throw ValidationError("VariantId", "واریانت در نفس‌لند پیدا نشد.");
         }
 
         if (!portalOptions.Value.IsWriteAllowed(current.ProductId))

@@ -38,7 +38,7 @@ internal static class GetProductEndpoint
         return TypedResults.Problem(
             statusCode: StatusCodes.Status404NotFound,
             title: "محصول پیدا نشد",
-            detail: "محصول در پرتال پیدا نشد.",
+            detail: "محصول در نفس‌لند پیدا نشد.",
             extensions: new Dictionary<string, object?>
             {
                 ["correlationId"] = correlationIdAccessor.CorrelationId,

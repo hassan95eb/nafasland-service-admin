@@ -44,7 +44,7 @@ export function ReturnRequestForm() {
     <section className="space-y-5">
       <header className="space-y-1">
         <h1 className="text-2xl font-black">ثبت مرجوعی</h1>
-        <p className="text-sm text-[var(--muted)]">سفارش از پرتال خوانده می‌شود؛ مرجوعی پس از تأیید سوپرادمین ثبت می‌شود.</p>
+        <p className="text-sm text-[var(--muted)]">سفارش از نفس‌لند خوانده می‌شود؛ مرجوعی پس از تأیید سوپرادمین ثبت می‌شود.</p>
       </header>
 
       <form className="flex flex-wrap items-end gap-3 rounded-xl border border-[var(--border)] bg-white p-4 shadow-sm" onSubmit={handleFetchOrder} noValidate>

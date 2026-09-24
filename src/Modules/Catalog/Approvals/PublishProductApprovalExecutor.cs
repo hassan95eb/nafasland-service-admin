@@ -30,7 +30,7 @@ internal sealed class PublishProductApprovalExecutor(IPortalProductClient portal
         CatalogApprovalGuard.EnsureTestProduct(payload.ProductId, portalOptions.Value);
 
         var product = await portalClient.GetProductAsync(payload.ProductId, cancellationToken)
-            ?? throw new ResourceNotFoundException("محصول در پرتال پیدا نشد.");
+            ?? throw new ResourceNotFoundException("محصول در نفس‌لند پیدا نشد.");
 
         return new ApprovalPreview(product.Title ?? payload.ProductId,
         [
@@ -55,7 +55,7 @@ internal sealed class PublishProductApprovalExecutor(IPortalProductClient portal
         try
         {
             var current = await portalClient.GetProductAsync(payload.ProductId, cancellationToken)
-                ?? throw new ResourceNotFoundException("محصول در پرتال پیدا نشد.");
+                ?? throw new ResourceNotFoundException("محصول در نفس‌لند پیدا نشد.");
 
             var status = new List<string>(current.Statuses);
             if (payload.Publish)

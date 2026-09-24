@@ -91,7 +91,7 @@ internal sealed class ProblemDetailsExceptionHandler(ILogger<ProblemDetailsExcep
             PortalUnavailableException portalUnavailable => new ProblemDetails
             {
                 Status = StatusCodes.Status503ServiceUnavailable,
-                Title = "پرتال در دسترس نیست",
+                Title = "نفس‌لند در دسترس نیست",
                 Detail = portalUnavailable.Message,
             },
             CommandValidationException validation => BuildValidationProblemDetails(validation),
