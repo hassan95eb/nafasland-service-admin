@@ -43,7 +43,7 @@ export function ProductList() {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl font-black">محصولات</h1>
-          <p className="text-sm text-[var(--muted)]">فهرست زندهٔ پرتال؛ {formatPersianNumber(query.data?.total ?? 0)} محصول</p>
+          <p className="text-sm text-[var(--muted)]">فهرست زندهٔ نفس‌لند؛ {formatPersianNumber(query.data?.total ?? 0)} محصول</p>
         </div>
         <Can permission="catalog.products.write">
           <Link className="rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-bold text-white" href="/products/new">ایجاد محصول</Link>

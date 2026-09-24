@@ -66,7 +66,7 @@ export function TaxonomySelectors({ categories, filters, categoryIds, filterIds,
           value={categorySearch}
           onChange={(event) => setCategorySearch(event.target.value)}
         />
-        <div className="max-h-80 space-y-1 overflow-y-auto rounded-lg border border-[var(--border)] p-3">
+        <div className="max-h-80 space-y-0.5 overflow-y-auto rounded-lg border border-[var(--border)] p-2">
           {visibleCategories.length === 0 ? (
             <p className="text-sm text-[var(--muted)]">دسته‌بندی‌ای پیدا نشد.</p>
           ) : (
@@ -100,6 +100,14 @@ export function TaxonomySelectors({ categories, filters, categoryIds, filterIds,
   );
 }
 
+function Chevron({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" className={`size-3.5 shrink-0 transition-transform ${className}`}>
+      <path d="M10 3.5 5.5 8l4.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function CategoryItem({ item, selected, onChange, depth, term }: {
   item: CategoryNode;
   selected: Set<string>;
@@ -107,34 +115,46 @@ function CategoryItem({ item, selected, onChange, depth, term }: {
   depth: number;
   term: string;
 }) {
+  const [open, setOpen] = useState(() => hasSelectedDescendant(item, selected));
   const visibleChildren = item.children.filter((child) => categoryMatches(child, term));
-  const label = (
-    <label className="flex items-center gap-2 text-sm">
-      <input
-        type="checkbox"
-        disabled={!isSelectableCategory(item.type)}
-        checked={selected.has(item.id)}
-        onClick={(event) => event.stopPropagation()}
-        onChange={() => onChange(toggle(selected, item.id))}
-      />
-      {item.title}
-      {!isSelectableCategory(item.type) ? <span className="text-[var(--muted)]">(والد)</span> : null}
-    </label>
-  );
-
-  if (visibleChildren.length === 0) {
-    return <div style={{ paddingInlineStart: `${depth * 16}px` }}>{label}</div>;
-  }
+  const hasChildren = visibleChildren.length > 0;
+  const expanded = hasChildren && (Boolean(term) || open);
 
   return (
-    <details style={{ paddingInlineStart: `${depth * 16}px` }} open={Boolean(term) || hasSelectedDescendant(item, selected)}>
-      <summary className="cursor-pointer">{label}</summary>
-      <div className="mt-1 space-y-1">
-        {visibleChildren.map((child) => (
-          <CategoryItem key={child.id} item={child} selected={selected} onChange={onChange} depth={depth + 1} term={term} />
-        ))}
+    <div>
+      <div className="flex min-h-8 items-center gap-1.5 rounded-md px-1 hover:bg-[var(--background)]" style={{ paddingInlineStart: `${depth * 20 + 4}px` }}>
+        {hasChildren ? (
+          <button
+            type="button"
+            className="grid size-5 shrink-0 place-items-center rounded text-[var(--muted)] hover:text-[var(--foreground)]"
+            aria-expanded={expanded}
+            aria-label={expanded ? `بستن ${item.title ?? ""}` : `باز کردن ${item.title ?? ""}`}
+            onClick={() => setOpen(!expanded)}
+          >
+            <Chevron className={expanded ? "-rotate-90" : ""} />
+          </button>
+        ) : (
+          <span className="size-5 shrink-0" aria-hidden="true" />
+        )}
+        <label className="flex flex-1 cursor-pointer items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            disabled={!isSelectableCategory(item.type)}
+            checked={selected.has(item.id)}
+            onChange={() => onChange(toggle(selected, item.id))}
+          />
+          <span>{item.title}</span>
+          {!isSelectableCategory(item.type) ? <span className="text-xs text-[var(--muted)]">(والد)</span> : null}
+        </label>
       </div>
-    </details>
+      {expanded ? (
+        <div className="space-y-0.5">
+          {visibleChildren.map((child) => (
+            <CategoryItem key={child.id} item={child} selected={selected} onChange={onChange} depth={depth + 1} term={term} />
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -147,12 +167,13 @@ function FilterGroupItem({ group, selected, onChange, forceOpen }: {
   const selectedCount = group.values.filter((value) => selected.has(value.id)).length;
 
   return (
-    <details className="rounded-lg border border-[var(--border)] p-3" open={forceOpen || selectedCount > 0}>
-      <summary className="cursor-pointer text-sm font-bold">
-        {group.title}
-        {selectedCount > 0 ? <span className="text-[var(--primary)]"> ({selectedCount})</span> : null}
+    <details className="group rounded-lg border border-[var(--border)] p-3" open={forceOpen || selectedCount > 0}>
+      <summary className="flex cursor-pointer list-none items-center gap-1.5 text-sm font-bold [&::-webkit-details-marker]:hidden">
+        <Chevron className="text-[var(--muted)] group-open:-rotate-90" />
+        <span>{group.title}</span>
+        {selectedCount > 0 ? <span className="text-[var(--primary)]">({selectedCount})</span> : null}
       </summary>
-      <fieldset className="mt-2 space-y-2">
+      <fieldset className="mt-2 space-y-2 ps-5">
         {group.values.map((value) => (
           <label className="flex gap-2 text-sm" key={value.id}>
             <input type="checkbox" checked={selected.has(value.id)} onChange={() => onChange(toggle(selected, value.id))} />

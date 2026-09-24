@@ -9,10 +9,11 @@ import type { CreateProductRequest, UpdateProductRequest } from "@/features/prod
 import { productQueryKeys } from "@/features/products/api/list-products";
 import { RichTextEditor } from "@/features/products/components/rich-text-editor";
 import { TaxonomySelectors } from "@/features/products/components/taxonomy-selectors";
+import { emptyVariant, PRIMARY_TITLE, VariantBuilder, variantsOutOfSync, type VariantValue } from "@/features/products/components/variant-builder";
 import { useCreateProduct, useProductTaxonomy, useUpdateProduct } from "@/features/products/hooks/use-product-editor";
 import { createRichTextState, type RichTextState } from "@/features/products/lib/rich-text-state";
 import { createIdempotencyKey } from "@/features/products/lib/idempotency-key";
-import { createVariantSchema, productEditorSchema, selectedFilterIds, validateProductKind } from "@/features/products/schemas/product-editor-schema";
+import { completeAttributes, createVariantSchema, productEditorSchema, selectedFilterIds, validateProductKind } from "@/features/products/schemas/product-editor-schema";
 import { ApiError, presentApiError } from "@/shared/lib/api-client";
 import { formatPersianDateTime, formatPrice, formatPersianNumber } from "@/shared/lib/formatters";
 import { Alert } from "@/shared/ui/alert";
@@ -29,7 +30,6 @@ type ContentValue = NamedValue & { key: string; editor: RichTextState };
 
 let nextContentKey = 0;
 const newContentKey = () => `content-${nextContentKey++}`;
-type VariantValue = { title: string; price: string; stock: string; sku: string };
 
 export function ProductForm({ mode, product }: { mode: "create" | "edit"; product?: ProductDetail }) {
   const router = useRouter();
@@ -59,7 +59,7 @@ export function ProductForm({ mode, product }: { mode: "create" | "edit"; produc
     product?.attributes.map((item) => ({ name: item.name, value: item.value.join("، ") })) ?? [],
   );
   const [variants, setVariants] = useState<VariantValue[]>(() =>
-    mode === "create" ? [{ title: "primary", price: "", stock: "", sku: "" }] : [],
+    mode === "create" ? [emptyVariant(PRIMARY_TITLE)] : [],
   );
   const [categoryIds, setCategoryIds] = useState(() => new Set(product?.categories.map((item) => item.id) ?? []));
   const [filterIds, setFilterIds] = useState(() => new Set(product?.filters.map((item) => item.id) ?? []));
@@ -89,6 +89,9 @@ export function ProductForm({ mode, product }: { mode: "create" | "edit"; produc
 
     try {
       if (mode === "create") {
+        if (kind === "variable" && variantsOutOfSync(attributes, variants)) {
+          throw new Error("واریانت‌ها با ویژگی‌های تعریف‌شده هم‌خوان نیستند؛ «ساخت واریانت‌ها» را بزنید.");
+        }
         const kindError = validateProductKind(kind, variants.map((variant) => variant.title.trim()));
         if (kindError) throw new Error(kindError);
         const parsedVariants = variants.map((variant) => createVariantSchema.safeParse(variant));
@@ -103,25 +106,25 @@ export function ProductForm({ mode, product }: { mode: "create" | "edit"; produc
           fields: fields.map(toApiNameValue),
           categoryIds: [...categoryIds].map(Number),
           filterIds: selectedFilterIds(filterIds),
-          attributes: kind === "variable" ? attributes.map((item) => ({
-            name: item.name,
-            value: item.value.split(/[،,]/).map((value) => value.trim()).filter(Boolean),
-          })) : [],
+          attributes: kind === "variable"
+            ? completeAttributes(attributes).map((item) => ({ name: item.name, value: item.values }))
+            : [],
           variants: parsedVariants.map((result) => {
             if (!result.success) throw new Error("واریانت نامعتبر است.");
             return {
               title: result.data.title,
               price: result.data.price,
-              comparePrice: null,
+              comparePrice: result.data.comparePrice,
+              // Tax and shipping stay null: the store's own settings apply, as in the NafasLand panel's default.
               tax: null,
               shipping: null,
-              weight: null,
-              length: null,
-              width: null,
-              height: null,
+              weight: result.data.weight,
+              length: result.data.length,
+              width: result.data.width,
+              height: result.data.height,
               stock: result.data.stock,
-              minimum: null,
-              maximum: null,
+              minimum: result.data.minimum,
+              maximum: result.data.maximum,
               sku: result.data.sku || null,
             };
           }),
@@ -131,7 +134,7 @@ export function ProductForm({ mode, product }: { mode: "create" | "edit"; produc
         return;
       }
 
-      if (!product?.version) throw new Error("نسخهٔ محصول در پاسخ پرتال موجود نیست.");
+      if (!product?.version) throw new Error("نسخهٔ محصول در پاسخ نفس‌لند موجود نیست.");
       const request: UpdateProductRequest = {
         ...nullableCommon(common.data),
         lastKnownVersion: product.version,
@@ -167,7 +170,7 @@ export function ProductForm({ mode, product }: { mode: "create" | "edit"; produc
       </header>
 
       {error ? <Alert>{error}</Alert> : null}
-      {unavailable ? <Alert tone="warning">دادهٔ پرتال در دسترس نیست یا کهنه است؛ ذخیره تا برقراری ارتباط غیرفعال است.</Alert> : null}
+      {unavailable ? <Alert tone="warning">دادهٔ نفس‌لند در دسترس نیست یا کهنه است؛ ذخیره تا برقراری ارتباط غیرفعال است.</Alert> : null}
 
       <section className="grid gap-4 rounded-xl border border-[var(--border)] bg-white p-5 md:grid-cols-2">
         <Field label="عنوان" name="title" defaultValue={product?.title ?? ""} required />
@@ -217,10 +220,7 @@ export function ProductForm({ mode, product }: { mode: "create" | "edit"; produc
       />
 
       {mode === "create" ? (
-        <CreateVariants kind={kind} onKindChange={(value) => {
-          setKind(value);
-          if (value === "simple") setVariants([{ title: "primary", price: "", stock: "", sku: "" }]);
-        }} attributes={attributes} onAttributes={setAttributes} variants={variants} onVariants={setVariants} />
+        <VariantBuilder kind={kind} onKindChange={setKind} attributes={attributes} onAttributes={setAttributes} variants={variants} onVariants={setVariants} />
       ) : product ? <ReadOnlyProductData product={product} /> : null}
 
       <SaveBar
@@ -266,26 +266,6 @@ function NamedValuesEditor({ title, values, onChange }: { title: string; values:
       <Button type="button" variant="secondary" onClick={() => onChange([...values, { name: "", value: "" }])}>افزودن</Button>
     </section>
   );
-}
-
-function CreateVariants({ kind, onKindChange, attributes, onAttributes, variants, onVariants }: {
-  kind: "simple" | "variable"; onKindChange: (value: "simple" | "variable") => void;
-  attributes: NamedValue[]; onAttributes: (value: NamedValue[]) => void;
-  variants: VariantValue[]; onVariants: (value: VariantValue[]) => void;
-}) {
-  return <section className="space-y-4 rounded-xl border border-[var(--border)] bg-white p-5">
-    <h2 className="font-black">نوع و واریانت‌های اولیه</h2>
-    <div className="flex gap-5"><label><input type="radio" checked={kind === "simple"} onChange={() => onKindChange("simple")} /> کالای ساده</label><label><input type="radio" checked={kind === "variable"} onChange={() => onKindChange("variable")} /> کالای چندواریانتی</label></div>
-    {kind === "variable" ? <NamedValuesEditor title="ویژگی‌ها؛ مقادیر را با ویرگول جدا کنید" values={attributes} onChange={onAttributes} /> : null}
-    {variants.map((variant, index) => <div className="grid gap-2 border-t border-[var(--border)] pt-4 md:grid-cols-4" key={index}>
-      <Input aria-label="عنوان واریانت" value={variant.title} disabled={kind === "simple"} onChange={(event) => onVariants(replaceAt(variants, index, { ...variant, title: event.target.value }))} />
-      <Input aria-label="قیمت" inputMode="decimal" placeholder="قیمت تومان" value={variant.price} onChange={(event) => onVariants(replaceAt(variants, index, { ...variant, price: event.target.value }))} />
-      <Input aria-label="موجودی" inputMode="numeric" placeholder="موجودی" value={variant.stock} onChange={(event) => onVariants(replaceAt(variants, index, { ...variant, stock: event.target.value }))} />
-      <Input aria-label="SKU" value={variant.sku} onChange={(event) => onVariants(replaceAt(variants, index, { ...variant, sku: event.target.value }))} />
-      {kind === "variable" ? <Button type="button" variant="ghost" onClick={() => onVariants(removeAt(variants, index))}>حذف واریانت</Button> : null}
-    </div>)}
-    {kind === "variable" ? <Button type="button" variant="secondary" onClick={() => onVariants([...variants, { title: "", price: "", stock: "", sku: "" }])}>افزودن واریانت</Button> : null}
-  </section>;
 }
 
 function ReadOnlyProductData({ product }: { product: ProductDetail }) {

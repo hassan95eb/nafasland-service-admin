@@ -22,7 +22,7 @@ internal sealed class UpdateProductCommandHandler(
     {
         auditContext.SetEntityId(command.ProductId);
         var current = await portalClient.GetProductAsync(command.ProductId, cancellationToken)
-            ?? throw new ResourceNotFoundException("محصول در پرتال پیدا نشد.");
+            ?? throw new ResourceNotFoundException("محصول در نفس‌لند پیدا نشد.");
 
         auditContext.SetBefore(current);
 
@@ -40,7 +40,7 @@ internal sealed class UpdateProductCommandHandler(
         if (current.Statuses.Count == 0)
         {
             throw new BusinessRuleException(
-                "پرتال آرایهٔ کامل وضعیت محصول را برنگرداند؛ برای جلوگیری از تغییر ناخواسته، ذخیره انجام نشد.");
+                "نفس‌لند آرایهٔ کامل وضعیت محصول را برنگرداند؛ برای جلوگیری از تغییر ناخواسته، ذخیره انجام نشد.");
         }
 
         var preserved = PortalProductMapper.ToWriteModel(current);

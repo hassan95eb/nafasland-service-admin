@@ -27,7 +27,7 @@ internal sealed class ProductStatusApprovalExecutor(IPortalProductClient portalC
         CatalogApprovalGuard.EnsureTestProduct(payload.ProductId, portalOptions.Value);
 
         var product = await portalClient.GetProductAsync(payload.ProductId, cancellationToken)
-            ?? throw new ResourceNotFoundException("محصول در پرتال پیدا نشد.");
+            ?? throw new ResourceNotFoundException("محصول در نفس‌لند پیدا نشد.");
 
         var isCurrentlySet = product.Statuses.Contains(payload.StatusKey, StringComparer.OrdinalIgnoreCase);
         return new ApprovalPreview(product.Title ?? payload.ProductId,
@@ -50,7 +50,7 @@ internal sealed class ProductStatusApprovalExecutor(IPortalProductClient portalC
         try
         {
             var current = await portalClient.GetProductAsync(payload.ProductId, cancellationToken)
-                ?? throw new ResourceNotFoundException("محصول در پرتال پیدا نشد.");
+                ?? throw new ResourceNotFoundException("محصول در نفس‌لند پیدا نشد.");
 
             var status = new List<string>(current.Statuses);
             var wasSet = status.RemoveAll(value => string.Equals(value, payload.StatusKey, StringComparison.OrdinalIgnoreCase)) > 0;

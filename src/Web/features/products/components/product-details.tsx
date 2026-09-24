@@ -197,7 +197,7 @@ function VariantEditor({
     event.preventDefault();
     setError(undefined);
     if (!variant.id) {
-      setError("شناسهٔ واریانت در پاسخ پرتال موجود نیست؛ ذخیره انجام نشد.");
+      setError("شناسهٔ واریانت در پاسخ نفس‌لند موجود نیست؛ ذخیره انجام نشد.");
       return;
     }
     const data = new FormData(event.currentTarget);
