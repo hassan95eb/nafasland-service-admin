@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NafasLand.Admin.Modules.Auditing.Persistence;
 
@@ -11,9 +12,11 @@ using NafasLand.Admin.Modules.Auditing.Persistence;
 namespace NafasLand.Admin.Modules.Auditing.Persistence.Migrations
 {
     [DbContext(typeof(AuditingDbContext))]
-    partial class AuditingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260924124055_WidenAuditCorrelationId")]
+    partial class WidenAuditCorrelationId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
