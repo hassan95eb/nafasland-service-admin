@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using NafasLand.Admin.Modules.Approvals.Infrastructure;
 using NafasLand.Admin.Modules.Approvals.Jobs;
 using NafasLand.Admin.Modules.Approvals.Persistence;
+using NafasLand.Admin.Shared.Kernel.Auditing;
 using NafasLand.Admin.Shared.Kernel.Errors;
 using NafasLand.Admin.Shared.Kernel.Messaging;
 
@@ -11,11 +12,14 @@ internal sealed class CreateApprovalRequestCommandHandler(
     ApprovalsDbContext dbContext,
     IApprovalExecutorRegistry registry,
     IHttpContextAccessor httpContextAccessor,
-    ApprovalExecutionCoordinator coordinator)
+    ApprovalExecutionCoordinator coordinator,
+    IAuditContext auditContext)
     : ICommandHandler<CreateApprovalRequestCommand, CreateApprovalRequestResult>
 {
     public async Task<CreateApprovalRequestResult> HandleAsync(CreateApprovalRequestCommand command, CancellationToken cancellationToken)
     {
+        auditContext.SetEntityId(command.TargetEntityId);
+
         var executor = registry.Resolve(command.RequestType)
             ?? throw new BusinessRuleException("نوع درخواست تأیید نامعتبر است.");
 
@@ -51,15 +55,14 @@ internal sealed class CreateApprovalRequestCommandHandler(
         dbContext.ApprovalRequests.Add(request);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var (ipAddress, userAgent) = ApprovalActorInfo.RequestInfo(httpContextAccessor.HttpContext);
-        await coordinator.WriteAuditAsync(
-            request,
-            "ApprovalRequested",
-            requestedByUserId,
-            ApprovalActorInfo.RoleAtTime(httpContextAccessor.HttpContext),
-            ipAddress,
-            userAgent,
-            cancellationToken);
+        // AuditBehavior writes the ApprovalRequested row from this (see the command's own comment).
+        auditContext.SetAfter(new
+        {
+            ApprovalRequestId = request.Id,
+            request.RequestType,
+            request.Reason,
+            Status = request.Status.ToString(),
+        });
 
         return new CreateApprovalRequestResult(request.Id, request.RequestType, request.Status.ToString(), request.RequestedAt, request.ExpiresAt);
     }

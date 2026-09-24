@@ -292,13 +292,15 @@ curl -s -X POST http://localhost:8080/api/v1/audit/export \
 | --- | --- |
 | `GET /logs` | `audit.read.all` — فیلتر با query string، صفحه‌بندی keyset (`cursor`, `pageSize`) |
 | `GET /logs/{id}` | `audit.read.all` — جزئیات کامل یک رکورد (Before/After/ChangedFields دیسریالایز‌شده) |
-| `GET /users/{userId}` | `audit.read.all` — شمار به‌تفکیک Outcome + timeline صفحه‌بندی‌شده |
-| `GET /products/{externalProductId}` | `audit.read.all` — تاریخچهٔ یک محصول؛ نبود `ProductRef` خطا نمی‌دهد |
+| `GET /users/{userId}` | `audit.read.all` — شمار به‌تفکیک Outcome و به‌تفکیک Action+Outcome (`countsByAction`) + timeline صفحه‌بندی‌شده |
+| `GET /products/{externalProductId}` (اختیاری: `variantId` تکرارشونده) | `audit.read.all` — تاریخچهٔ یک محصول با رویدادهای واریانت‌هایش و عنوان از `ProductRef`؛ نبود `ProductRef` خطا نمی‌دهد |
+| `GET /actors` | `audit.read.all` — هر کسی که در لاگ عامل بوده، با نام کاربری (گزینه‌های فیلتر «کاربر») |
 | `POST /export` (بدنه: فیلترها + `format`: `csv`\|`xlsx`) | `audit.export` — یک `ICommand` واقعی، خودش لاگ می‌شود |
 | `GET /export/{jobId}/status`, `GET /export/{jobId}/download` | `audit.export` — فقط برای مسیر >۲۵٬۰۰۰ ردیف (job پس‌زمینه) |
 
 هر دو permission این ماژول `IsSuperAdminOnly` هستند؛ نقش Admin از هیچ‌کدام
-این شش endpoint چیزی نمی‌بیند (۴۰۳).
+این endpointها چیزی نمی‌بیند (۴۰۳). پاسخ‌های خواندن، کنار `actorUserId`،
+`actorUsername` را هم دارند (از Identity، از طریق `IUserDirectory` در Kernel).
 
 پاک‌سازی ۶ماهه (ADR-015) یک Hangfire recurring job است (شناسهٔ
 `audit-log-purge`، هر روز ساعت ۰۳:۰۰ UTC — عددی دلخواه و کم‌ترافیک، نه
@@ -435,6 +437,39 @@ curl -s -X POST "http://localhost:8080/api/v1/approvals/<id>/approval" \
 `200` است و بدنه `status: "ExecutionFailed"` و `executionError` را برمی‌گرداند؛
 تصمیم تأیید از دست نمی‌رود و فقط با `POST /api/v1/approvals/{id}/retry`
 (دستی، بدون تلاش خودکار) دوباره اجرا می‌شود.
+
+## گزارش فعالیت در پنل (گام ۹)
+
+نماهای ADR-014 روی همان اندپوینت‌های بالا. هیچ اندپوینت ویرایش یا حذف لاگ
+وجود ندارد، برای هیچ نقشی.
+
+| مسیر پنل | permission | چه چیزی |
+| --- | --- | --- |
+| `/admin/audit` | `audit.read.all` | لاگ سراسری با فیلتر کاربر، بازهٔ تاریخ شمسی، عملیات، نوع موجودیت و نتیجه؛ فیلترها در query string می‌مانند (لینک قابل اشتراک). کلیک روی ردیف، جزئیات «قبل ← بعد» را در پنل کناری باز می‌کند. |
+| `/admin/audit/users/{userId}` | `audit.read.all` | کارت‌های شمارشی بازهٔ انتخابی (ایجاد، ویرایش، درخواست تأیید، تصمیم، تلاش ردشده، ناموفق) و تایم‌لاین همان کاربر. از روی نام عامل در لاگ سراسری. |
+| `/products/{id}` → «تاریخچهٔ تغییرات» | `audit.read.all` | رویدادهای خود محصول، تغییر قیمت/موجودی واریانت‌ها و درخواست‌های تأیید آن، با عنوان از `ProductRef`. بدون این permission بخش رندر نمی‌شود و درخواستش هم فرستاده نمی‌شود. |
+| دکمهٔ «خروجی» در `/admin/audit` | `audit.export` | CSV یا Excel دقیقاً با فیلترهای فعال. |
+
+- آیتم منوی «گزارش فعالیت» فقط با `audit.read.all` دیده می‌شود و هر دو صفحه
+  در سمت سرور هم با `requirePermission("audit.read.all")` بسته‌اند؛ آدرس مستقیم
+  بدون permission به `/forbidden` می‌رود.
+- **خروجی:** تا ۲۵٬۰۰۰ ردیف فایل همان لحظه دانلود می‌شود. بیشتر از آن (سقف با
+  `Auditing:Export:SynchronousRowThreshold` قابل تنظیم است)، پاسخ `202` با
+  `jobId` است؛ پنل پیام «فایل در حال آماده‌سازی است» نشان می‌دهد، هر ۵ ثانیه
+  وضعیت را می‌پرسد و وقتی آماده شد لینک دانلود می‌گذارد. `jobId` در
+  `localStorage` مرورگر نگه داشته می‌شود تا با ترک صفحه و برگشت گم نشود. هیچ
+  اعلان ایمیل یا پیامکی در کار نیست. خود خروجی با `Action = AuditExported` و
+  فیلترهایش ثبت می‌شود.
+- **محدودیت ADR-014:** گزارش فقط کارهای انجام‌شده از همین پنل را دارد. تا وقتی
+  دسترسی به پنل خود پرتال باز است، نبودن یک رویداد به‌معنای «انجام نشده» نیست؛
+  این جمله به‌صورت بنر ثابت بالای هر صفحهٔ گزارش آمده است. رکوردهای قدیمی‌تر از
+  ۶ ماه (ADR-015) بایگانی و از نما حذف می‌شوند.
+- مقادیر حساس: هر کلیدی در `Before`/`After` که به password، hash، secret یا
+  token شبیه باشد، در پاسخ `GET /logs/{id}` پیش از خروج از سرور با `***`
+  پوشانده می‌شود.
+- مهاجرت تازهٔ این گام (`AddAuditLogParentEntity` در schema `audit`) را مثل بقیه
+  با `dotnet ef database update` برای `AuditingDbContext` اجرا کن
+  (`scripts/dev-up.sh` این کار را خودش می‌کند).
 
 ## متغیرهای محیطی (`.env`)
 

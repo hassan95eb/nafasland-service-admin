@@ -1,3 +1,4 @@
+using NafasLand.Admin.Shared.Kernel.Auditing;
 using NafasLand.Admin.Shared.Kernel.Messaging;
 using NafasLand.Admin.Shared.Kernel.Permissions;
 
@@ -12,6 +13,14 @@ namespace NafasLand.Admin.Modules.Approvals.Features.CreateApprovalRequest;
 /// exactly as-is — no change to IRequiresPermission or AuthorizationBehavior was
 /// needed (this was flagged as an open question in the step prompt; this is the
 /// resolution, reported in the PR description).
+///
+/// Unlike the decision commands, this one is an IAuditableCommand: filing is a
+/// single-actor event (requester == actor, nothing "on behalf of"), so the
+/// standard AuditBehavior/AuthorizationBehavior path fits — and it is the only
+/// way a filing that is refused (missing "*.request" permission → Denied, ADR-002)
+/// or that fails before the request row exists (e.g. the dev test-product guard
+/// in PreviewAsync → Failed) still reaches AuditLog. A hand-written audit call at
+/// the end of the handler, as before, only ever saw the success path.
 /// </summary>
 internal sealed record CreateApprovalRequestCommand(
     string RequestType,
@@ -20,7 +29,12 @@ internal sealed record CreateApprovalRequestCommand(
     string Reason,
     string PayloadJson,
     string RequiredPermission)
-    : ICommand<CreateApprovalRequestResult>, IRequiresPermission;
+    : ICommand<CreateApprovalRequestResult>, IRequiresPermission, IAuditableCommand
+{
+    public string AuditAction => "ApprovalRequested";
+
+    public string AuditEntityType => TargetEntityType;
+}
 
 internal sealed record CreateApprovalRequestResult(
     Guid Id,

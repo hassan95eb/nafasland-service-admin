@@ -14,7 +14,8 @@ internal sealed class CreateProductCommandHandler(
     IOptions<PortalOptions> portalOptions,
     IProductHtmlSanitizer htmlSanitizer,
     ProductCache cache,
-    IAuditContext auditContext)
+    IAuditContext auditContext,
+    IProductRefWriter productRefWriter)
     : ICommandHandler<CreateProductCommand, CreateProductResult>
 {
     public async Task<CreateProductResult> HandleAsync(CreateProductCommand command, CancellationToken cancellationToken)
@@ -56,6 +57,13 @@ internal sealed class CreateProductCommandHandler(
             ?? throw new PortalUnavailableException();
         auditContext.SetAfter(actual);
         cache.InvalidateLists();
+
+        // ADR-009's ProductRef, from what the portal actually stored.
+        if (!string.IsNullOrWhiteSpace(actual.Title))
+        {
+            await productRefWriter.UpsertAsync(actual.Id, actual.Title, cancellationToken);
+        }
+
         return new CreateProductResult(actual.Id, actual.Version, actual.Title);
     }
 

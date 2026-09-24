@@ -10,7 +10,11 @@ test("فقط لینک‌هایی را نگه می‌دارد که permission آ�
     filterNavItems(["catalog.products.read", "identity.users.manage"]).map((item) => item.href),
     ["/products", "/admins", "/approvals"],
   );
-  assert.deepEqual(filterNavItems(["audit.read.all"]).map((item) => item.href), ["/approvals"]);
+});
+
+test("«گزارش فعالیت» فقط برای audit.read.all نمایش داده می‌شود (ADR-014)", () => {
+  assert.deepEqual(filterNavItems(["audit.read.all"]).map((item) => item.href), ["/approvals", "/admin/audit"]);
+  assert.deepEqual(filterNavItems(["audit.export"]).map((item) => item.href), ["/approvals"]);
 });
 
 test("«درخواست‌های من» بدون هیچ permission ای برای هر کاربر واردشده نمایش داده می‌شود", () => {

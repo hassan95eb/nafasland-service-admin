@@ -51,6 +51,15 @@ internal sealed class AuditLog
 
     public DateTime CreatedAt { get; private set; }
 
+    /// <summary>
+    /// The entity whose history this record also belongs to (e.g. the Product
+    /// owning a changed ProductVariant). Null on every row written before this
+    /// column existed — those rows are never backfilled (append-only, ADR-009).
+    /// </summary>
+    public string? ParentEntityType { get; private set; }
+
+    public string? ParentEntityId { get; private set; }
+
     public static AuditLog FromEntry(AuditLogEntry entry, DateTime createdAtUtc)
     {
         return new AuditLog
@@ -72,6 +81,8 @@ internal sealed class AuditLog
             IpAddress = entry.IpAddress,
             UserAgent = entry.UserAgent,
             CreatedAt = createdAtUtc,
+            ParentEntityType = entry.ParentEntityType,
+            ParentEntityId = entry.ParentEntityId,
         };
     }
 }

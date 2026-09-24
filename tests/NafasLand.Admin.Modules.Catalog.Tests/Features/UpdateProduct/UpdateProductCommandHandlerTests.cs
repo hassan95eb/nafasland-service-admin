@@ -23,6 +23,30 @@ public sealed class UpdateProductCommandHandlerTests
     }
 
     [Fact]
+    public async Task ویرایش_موفق_عنوان_ProductRef_را_به_عنوان_جدید_به‌روز_می‌کند()
+    {
+        var portal = PortalWithCompleteDetail();
+        var productRefWriter = new RecordingProductRefWriter();
+        var handler = CreateHandler(portal, productRefWriter);
+
+        await handler.HandleAsync(Command(), CancellationToken.None);
+
+        Assert.Equal(("101", "عنوان جدید"), Assert.Single(productRefWriter.Upserts));
+    }
+
+    [Fact]
+    public async Task ویرایش_ردشده_با_تداخل_ProductRef_را_دست_نمی‌زند()
+    {
+        var productRefWriter = new RecordingProductRefWriter();
+        var handler = CreateHandler(PortalWithCompleteDetail(), productRefWriter);
+
+        await Assert.ThrowsAsync<ConflictException>(() =>
+            handler.HandleAsync(Command(lastKnownVersion: "old"), CancellationToken.None));
+
+        Assert.Empty(productRefWriter.Upserts);
+    }
+
+    [Fact]
     public async Task محصول_غیرتستی_صفر_PUT_می‌فرستد()
     {
         var portal = PortalWithCompleteDetail();
@@ -103,12 +127,15 @@ public sealed class UpdateProductCommandHandlerTests
         Assert.Contains("text-align", changed, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static UpdateProductCommandHandler CreateHandler(FakePortalProductClient portal) => new(
+    private static UpdateProductCommandHandler CreateHandler(
+        FakePortalProductClient portal,
+        RecordingProductRefWriter? productRefWriter = null) => new(
         portal,
         Options.Create(new PortalOptions { TestProductId = "101" }),
         new ProductHtmlSanitizer(),
         new ProductCache(TimeProvider.System),
-        new CapturingAuditContext());
+        new CapturingAuditContext(),
+        productRefWriter ?? new RecordingProductRefWriter());
 
     private static FakePortalProductClient PortalWithCompleteDetail()
     {
@@ -150,6 +177,7 @@ public sealed class UpdateProductCommandHandlerTests
     private sealed class CapturingAuditContext : IAuditContext
     {
         public void SetEntityId(string entityId) { }
+        public void SetParentEntity(string entityType, string entityId) { }
         public void SetBefore(object? snapshot) { }
         public void SetAfter(object? snapshot) { }
     }

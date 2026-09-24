@@ -29,6 +29,7 @@ public sealed class UpdateVariantPriceAndInventoryCommandHandlerTests
         Assert.Equal(4, ReadInt(audit.Before, "stock"));
         Assert.Equal(120_000m, ReadDecimal(audit.After, "price"));
         Assert.Equal(7, ReadInt(audit.After, "stock"));
+        Assert.Equal(("Product", "101"), audit.Parent);
     }
 
     [Theory]
@@ -99,10 +100,12 @@ public sealed class UpdateVariantPriceAndInventoryCommandHandlerTests
     private sealed class CapturingAuditContext : IAuditContext
     {
         public string? EntityId { get; private set; }
+        public (string EntityType, string EntityId)? Parent { get; private set; }
         public object? Before { get; private set; }
         public object? After { get; private set; }
 
         public void SetEntityId(string entityId) => EntityId = entityId;
+        public void SetParentEntity(string entityType, string entityId) => Parent = (entityType, entityId);
         public void SetBefore(object? snapshot) => Before = snapshot;
         public void SetAfter(object? snapshot) => After = snapshot;
     }

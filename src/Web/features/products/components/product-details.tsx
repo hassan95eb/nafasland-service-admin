@@ -12,6 +12,7 @@ import { updateVariantSchema } from "@/features/products/schemas/update-variant-
 import { SafeProductHtml } from "@/features/products/components/safe-product-html";
 import { PendingApprovalBadge } from "@/features/approvals/components/pending-approval-badge";
 import { RequestActionButton } from "@/features/approvals/components/request-action-button";
+import { ProductAuditHistory } from "@/features/audit/components/product-audit-history";
 import { isLastVariant } from "@/features/products/lib/variant-delete-guard";
 import { ApiError, presentApiError } from "@/shared/lib/api-client";
 import { formatPersianDateTime, formatPrice, formatPersianNumber } from "@/shared/lib/formatters";
@@ -107,6 +108,13 @@ export function ProductDetails({ id }: { id: string }) {
           />
         ))}
       </div>
+
+      <Can permission="audit.read.all">
+        <ProductAuditHistory
+          productId={product.id}
+          variantIds={product.variants.flatMap((variant) => (variant.id ? [variant.id] : []))}
+        />
+      </Can>
     </section>
   );
 }

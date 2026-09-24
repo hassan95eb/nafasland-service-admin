@@ -8,8 +8,10 @@ using NafasLand.Admin.Shared.Infrastructure.Authorization;
 using NafasLand.Admin.Shared.Infrastructure.CorrelationId;
 using NafasLand.Admin.Shared.Infrastructure.ErrorHandling;
 using NafasLand.Admin.Shared.Infrastructure.Messaging;
+using NafasLand.Admin.Shared.Infrastructure.Users;
 using NafasLand.Admin.Shared.Kernel.Auditing;
 using NafasLand.Admin.Shared.Kernel.Messaging;
+using NafasLand.Admin.Shared.Kernel.Users;
 
 namespace NafasLand.Admin.Shared.Infrastructure.Extensions;
 
@@ -41,6 +43,10 @@ public static class ServiceCollectionExtensions
         // (tests, or that module disabled via feature flag) — AuditingModule
         // registers the real writer afterwards, which then wins resolution.
         services.TryAddScoped<IAuditLogWriter, NullAuditLogWriter>();
+        services.TryAddScoped<IProductRefWriter, NullProductRefWriter>();
+
+        // Same reasoning: IdentityModule registers the real directory afterwards.
+        services.TryAddScoped<IUserDirectory, NullUserDirectory>();
 
         services.AddScoped<ICommandDispatcher, CommandDispatcher>();
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));

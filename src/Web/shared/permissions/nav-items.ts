@@ -23,6 +23,11 @@ export const navItems = [
     label: "کارتابل تأیید",
     permission: "approvals.read.all",
   },
+  {
+    href: "/admin/audit",
+    label: "گزارش فعالیت",
+    permission: "audit.read.all",
+  },
 ] as const;
 
 export function filterNavItems(permissions: readonly string[]) {

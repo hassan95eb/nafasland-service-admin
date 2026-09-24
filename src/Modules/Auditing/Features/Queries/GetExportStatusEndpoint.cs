@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using NafasLand.Admin.Modules.Auditing.Persistence;
@@ -17,7 +18,7 @@ internal static class GetExportStatusEndpoint
 {
     public static void Map(IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/v1/audit/export/{jobId:guid}/status", async (
+        app.MapGet("/api/v1/audit/export/{jobId:guid}/status", async Task<Results<Ok<AuditExportStatusDto>, NotFound>> (
                 Guid jobId,
                 AuditingDbContext dbContext,
                 CancellationToken cancellationToken) =>
@@ -25,20 +26,26 @@ internal static class GetExportStatusEndpoint
                 var job = await dbContext.AuditExportJobs.AsNoTracking().SingleOrDefaultAsync(j => j.Id == jobId, cancellationToken);
                 if (job is null)
                 {
-                    return Results.NotFound();
+                    return TypedResults.NotFound();
                 }
 
-                return Results.Ok(new
-                {
+                return TypedResults.Ok(new AuditExportStatusDto(
                     job.Id,
-                    Status = job.Status.ToString(),
+                    job.Status.ToString(),
                     job.Format,
                     job.ErrorMessage,
                     job.CreatedAt,
-                    job.CompletedAt,
-                });
+                    job.CompletedAt));
             })
             .RequireAuthorization()
             .RequirePermission(AuditingPermissions.Export);
     }
 }
+
+internal sealed record AuditExportStatusDto(
+    Guid Id,
+    string Status,
+    string Format,
+    string? ErrorMessage,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? CompletedAt);

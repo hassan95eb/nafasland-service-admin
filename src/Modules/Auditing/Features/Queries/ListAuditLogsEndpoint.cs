@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using NafasLand.Admin.Modules.Auditing.Persistence;
 using NafasLand.Admin.Shared.Infrastructure.Authorization;
 using NafasLand.Admin.Shared.Kernel.Auditing;
+using NafasLand.Admin.Shared.Kernel.Users;
 
 namespace NafasLand.Admin.Modules.Auditing.Features.Queries;
 
@@ -26,6 +27,7 @@ internal static class ListAuditLogsEndpoint
                 string? cursor,
                 int? pageSize,
                 AuditingDbContext dbContext,
+                IUserDirectory userDirectory,
                 CancellationToken cancellationToken) =>
             {
                 var filter = new AuditLogFilter(actorUserId, from, to, action, entityType, outcome);
@@ -40,42 +42,9 @@ internal static class ListAuditLogsEndpoint
                     .Take(effectivePageSize + 1)
                     .ToListAsync(cancellationToken);
 
-                var hasMore = rows.Count > effectivePageSize;
-                var page = hasMore ? rows.Take(effectivePageSize).ToList() : rows;
-                var nextCursor = hasMore ? AuditLogQueryExtensions.EncodeCursor(page[^1]) : null;
-
-                return Results.Ok(new
-                {
-                    items = page.Select(AuditLogSummaryDto.FromEntity),
-                    nextCursor,
-                });
+                return TypedResults.Ok(await AuditLogPageDto.CreateAsync(rows, effectivePageSize, userDirectory, cancellationToken));
             })
             .RequireAuthorization()
             .RequirePermission(AuditingPermissions.ReadAll);
     }
-}
-
-internal sealed record AuditLogSummaryDto(
-    Guid Id,
-    string CorrelationId,
-    Guid? ActorUserId,
-    string ActorRoleAtTime,
-    string Action,
-    string? EntityType,
-    string? EntityId,
-    string Outcome,
-    string? FailureReason,
-    DateTime CreatedAt)
-{
-    public static AuditLogSummaryDto FromEntity(AuditLog log) => new(
-        log.Id,
-        log.CorrelationId,
-        log.ActorUserId,
-        log.ActorRoleAtTime,
-        log.Action,
-        log.EntityType,
-        log.EntityId,
-        log.Outcome.ToString(),
-        log.FailureReason,
-        log.CreatedAt);
 }

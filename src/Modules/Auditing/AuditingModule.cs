@@ -49,6 +49,7 @@ internal sealed class AuditingModule : IModule
         // whole application; this registration (added after AddSharedInfrastructure's
         // NullAuditLogWriter default) is the one that actually wins resolution.
         services.AddScoped<IAuditLogWriter, AuditLogWriter>();
+        services.AddScoped<IProductRefWriter, ProductRefWriter>();
 
         services.AddScoped<AuditExportBackgroundJob>();
         services.AddScoped<AuditLogPurgeJob>();
@@ -64,6 +65,7 @@ internal sealed class AuditingModule : IModule
         GetAuditLogEndpoint.Map(app);
         GetUserActivityEndpoint.Map(app);
         GetProductAuditHistoryEndpoint.Map(app);
+        ListAuditActorsEndpoint.Map(app);
         GetExportStatusEndpoint.Map(app);
         DownloadExportEndpoint.Map(app);
         ExportAuditLogEndpoint.Map(app);
